@@ -153,7 +153,7 @@ window.WebAuth = window.WebAuth || {
   const THEME_STORAGE_KEY = 'ccload_theme';
   const THEME_MODES = ['system', 'light', 'dark'];
   let systemThemeQuery = null;
-  let currentThemeMode = 'system';
+  let currentThemeMode = 'light';
 
   function h(tag, attrs = {}, children = []) {
     const el = document.createElement(tag);
@@ -218,9 +218,9 @@ window.WebAuth = window.WebAuth || {
     try {
       const saved = localStorage.getItem(THEME_STORAGE_KEY);
       const mode = typeof saved === 'string' ? saved.split(':', 1)[0] : null;
-      return THEME_MODES.includes(mode) ? mode : 'system';
+      return THEME_MODES.includes(mode) ? mode : 'light';
     } catch (_) {
-      return 'system';
+      return 'light';
     }
   }
 
@@ -272,7 +272,7 @@ window.WebAuth = window.WebAuth || {
   }
 
   function applyThemeMode(mode) {
-    currentThemeMode = THEME_MODES.includes(mode) ? mode : 'system';
+    currentThemeMode = THEME_MODES.includes(mode) ? mode : 'light';
     const resolvedTheme = resolveTheme(currentThemeMode);
     document.documentElement.dataset.theme = currentThemeMode;
     document.documentElement.dataset.resolvedTheme = resolvedTheme;

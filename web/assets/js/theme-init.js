@@ -40,7 +40,7 @@
   function getStoredTheme() {
     const localTheme = getLocalTheme();
     const cookieTheme = getCookieTheme();
-    if (!localTheme) return cookieTheme ? cookieTheme.mode : 'system';
+    if (!localTheme) return cookieTheme ? cookieTheme.mode : 'light';
     if (!cookieTheme) return localTheme.mode;
     return cookieTheme.updatedAt > localTheme.updatedAt ? cookieTheme.mode : localTheme.mode;
   }
