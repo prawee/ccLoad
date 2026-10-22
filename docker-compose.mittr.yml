@@ -1,0 +1,28 @@
+services:
+  mittr-load:
+    image: mittr-load:1.0.0
+    pull_policy: never
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:${MITTR_PORT:-8080}:8080"
+    env_file:
+      - .env.mittr.local
+    environment:
+      CCLOAD_PASS: ${CCLOAD_PASS:?Set CCLOAD_PASS to a strong admin password}
+      PORT: "8080"
+      SQLITE_PATH: /app/data/ccload.db
+      GIN_MODE: release
+      TZ: ${TZ:-Asia/Bangkok}
+      CCLOAD_CONTAINER: "1"
+      CCLOAD_ANTHROPIC_CLI_VERSION_SYNC: "false"
+    volumes:
+      - mittr-data:/app/data
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "--tries=1", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  mittr-data:
