@@ -5,7 +5,7 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const source = fs.readFileSync(path.join(__dirname, 'ui.js'), 'utf8');
-const wordmarkURL = '/web/brand-wordmark-mittr.svg?v=__VERSION__';
+const wordmarkURL = '/web/brand-wordmark-mittr.svg?v=mittr-1';
 const markURL = '/web/brand-mark-mittr.svg?v=__VERSION__';
 const faviconURL = '/web/favicon-mittr.ico';
 
@@ -22,6 +22,22 @@ test('all admin pages use only the supplied ICO as their browser favicon', () =>
     assert.match(links[0], /type="image\/x-icon"/, page);
     assert.doesNotMatch(html, /\/web\/favicon\.(?:svg|ico)/, page);
   }
+});
+
+test('all admin pages invalidate the pre-mittr immutable UI script cache', () => {
+  const webRoot = path.join(__dirname, '../..');
+  const pages = fs.readdirSync(webRoot).filter(file => file.endsWith('.html'));
+  let checked = 0;
+  for (const page of pages) {
+    const html = fs.readFileSync(path.join(webRoot, page), 'utf8');
+    if (!html.includes('/web/assets/js/ui.js')) continue;
+    assert.match(html, /src="\/web\/assets\/js\/ui\.js\?v=__VERSION__-mittr-1"/, page);
+    checked++;
+  }
+  assert.ok(checked > 0);
+  const svg = fs.readFileSync(path.join(webRoot, 'brand-wordmark-mittr.svg'), 'utf8');
+  assert.match(svg, /<text\b[^>]*>mittr<\/text>/);
+  assert.match(svg, /<text\b[^>]*>load<\/text>/);
 });
 
 test('activity favicon draws badges over the supplied ICO and restores the ICO fallback', () => {

@@ -654,7 +654,7 @@ window.WebAuth = window.WebAuth || {
   function buildTopbar(active) {
     const bar = h('header', { class: 'topbar' });
 
-    const iconImg = h('img', { class: 'brand-mark', src: '/web/brand-wordmark-mittr.svg?v=__VERSION__', alt: 'mittr load', width: 132, height: 36 });
+    const iconImg = h('img', { class: 'brand-mark', src: '/web/brand-wordmark-mittr.svg?v=mittr-1', alt: 'mittr load', width: 132, height: 36 });
     const speedLines = h('span', { class: 'brand-speed-lines', 'aria-hidden': 'true' }, [
       h('i'), h('i'), h('i'), h('i'), h('i')
     ]);

@@ -105,7 +105,7 @@ const CHEVRON_ICON = '<path d="m6 9 6 6 6-6"/>';
 const LANG_ICON = '<path d="M12.87 15.07 10.33 12.56l.03-.03A17.52 17.52 0 0 0 14.07 6H17V4h-7V2H8v2H1v2h11.17C11.5 7.92 10.44 9.75 9 11.35 8.07 10.32 7.3 9.19 6.69 8h-2c.73 1.63 1.73 3.17 2.98 4.56L2.58 17.58 4 19l5-5 3.11 3.11.76-2.04ZM18.5 10h-2L12 22h2l1.12-3h4.75L21 22h2l-4.5-12Zm-2.62 7 1.62-4.33L19.12 17h-3.24Z"/>';
 
 // 发布到站点的静态资源；语言包只在构建期使用，不发布
-const STATIC_FILES = ['favicon.svg', 'favicon.ico', 'apple-touch-icon.png', 'brand-mark.svg', 'brand-wordmark.svg'];
+const STATIC_FILES = ['favicon-mittr.svg', 'favicon-mittr.ico', 'apple-touch-icon.png', 'brand-mark-mittr.svg', 'brand-wordmark-mittr.svg'];
 const STATIC_DIRS = ['assets/css', 'assets/js', 'assets/images', 'assets/video'];
 // 只对这些相对资源路径加 ../ 前缀与版本号；页面间链接（*.html、./）在 /zh/ 下保持同级跳转
 const ASSET_URL = /^(assets\/|[\w-]+\.(?:svg|ico|png)(?:[?#]|$))/;
@@ -246,8 +246,8 @@ function renderNav(page, alternate, t, stars) {
   return `<nav class="www-nav" aria-label="${t('www.nav.label')}">
     <div class="www-nav-container">
       <a href="./" class="www-nav-logo" aria-label="ccLoad">
-        <img class="www-logo-icon" src="brand-mark.svg" alt="" width="36" height="36">
-        <svg class="www-logo-wordmark" viewBox="0 0 132 24" aria-hidden="true"><use href="brand-wordmark.svg#brand-wordmark" width="132" height="36"></use></svg>
+        <img class="www-logo-icon" src="brand-mark-mittr.svg" alt="" width="36" height="36">
+        <img class="www-logo-wordmark" src="brand-wordmark-mittr.svg" alt="" width="132" height="36">
       </a>
       <ul class="www-nav-menu" id="www-nav-menu">
 ${items}

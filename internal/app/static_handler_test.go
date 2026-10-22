@@ -19,15 +19,15 @@ func TestStaticFileServing(t *testing.T) {
 	}()
 
 	root := fstest.MapFS{
-		"web/index.html":       &fstest.MapFile{Data: []byte("v=__VERSION__")},
-		"web/app.js":           &fstest.MapFile{Data: []byte("console.log('x')")},
-		"web/manifest.json":    &fstest.MapFile{Data: []byte(`{"name":"x"}`)},
-		"web/dir/index.html":   &fstest.MapFile{Data: []byte("dir=__VERSION__")},
-		"web/dir/asset.css":    &fstest.MapFile{Data: []byte("body{}")},
-		"web/favicon.ico":      &fstest.MapFile{Data: []byte{0x00, 0x01}},
-		"web/image.png":        &fstest.MapFile{Data: []byte{0x89, 0x50, 0x4e, 0x47}},
-		"web/unknown.bin":      &fstest.MapFile{Data: []byte{0x01, 0x02}},
-		"web/subdir/nested.js": &fstest.MapFile{Data: []byte("x")},
+		"web/index.html":        &fstest.MapFile{Data: []byte("v=__VERSION__")},
+		"web/app.js":            &fstest.MapFile{Data: []byte("console.log('x')")},
+		"web/manifest.json":     &fstest.MapFile{Data: []byte(`{"name":"x"}`)},
+		"web/dir/index.html":    &fstest.MapFile{Data: []byte("dir=__VERSION__")},
+		"web/dir/asset.css":     &fstest.MapFile{Data: []byte("body{}")},
+		"web/favicon-mittr.ico": &fstest.MapFile{Data: []byte{0x00, 0x01}},
+		"web/image.png":         &fstest.MapFile{Data: []byte{0x89, 0x50, 0x4e, 0x47}},
+		"web/unknown.bin":       &fstest.MapFile{Data: []byte{0x01, 0x02}},
+		"web/subdir/nested.js":  &fstest.MapFile{Data: []byte("x")},
 	}
 
 	SetEmbedFS(root, "web")

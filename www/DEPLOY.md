@@ -28,7 +28,7 @@ make www-release   # 构建后 rsync --delete www/dist/ 到线上目录
 ### Nginx
 
 ```nginx
-# 带 ?v= 的资源 URL 随内容变化，可永久缓存；不带版本号的（favicon.ico、OG 图）只短缓存
+# 带 ?v= 的资源 URL 随内容变化，可永久缓存；不带版本号的（favicon-mittr.ico、OG 图）只短缓存
 map $arg_v $www_asset_cache {
     ""      "public, max-age=3600";
     default "public, max-age=31536000, immutable";
@@ -58,7 +58,7 @@ server {
 
 - 页面引用的本地资源由 `build.mjs` 按文件内容自动附 `?v=<hash>`，改了内容 URL 就变，发布不需要手动改版本号或清 CDN。
 - 字幕必须以 `text/vtt` 返回，Firefox 才会加载。nginx 自带的 `mime.types` 没有 `vtt` 时，在 http 块 `include mime.types;` 之后追加 `types { text/vtt vtt; }`。
-- 前置 Cloudflare 时：缓存规则不要对 4xx 强制长 Edge TTL，否则发布前被请求过的路径会在边缘一直 404；改了不带版本号的文件（favicon.ico、OG 图）才需要按 URL purge。
+- 前置 Cloudflare 时：缓存规则不要对 4xx 强制长 Edge TTL，否则发布前被请求过的路径会在边缘一直 404；改了不带版本号的文件（favicon-mittr.ico、OG 图）才需要按 URL purge。
 
 ### 其他静态托管（GitHub Pages / Netlify / Vercel / Cloudflare Pages）
 
@@ -108,7 +108,7 @@ www/promo/audio.sh zh    # 配旁白和背景音乐，原地替换；同时写�
 ## 🐛 故障排除
 
 - **`make www-build` 报 missing translations**：中文语言包缺少报错中列出的键
-- **报 missing favicon.svg 等**：先执行 `make www-setup`
+- **报 missing favicon-mittr.svg 等**：先执行 `make www-setup`
 - **样式未加载**：确认部署的是 `dist/` 而不是 `www/` 源目录
 
 ## 🤝 贡献

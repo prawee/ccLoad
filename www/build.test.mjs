@@ -46,6 +46,71 @@ test('站内引用的本地资源和页面都存在', () => {
   }
 });
 
+test('all generated pages use the copied mittr mark with content-versioned locale paths', () => {
+  const mark = 'brand-mark-mittr.svg';
+  const artwork = fs.readFileSync(new URL(`../web/${mark}`, import.meta.url));
+  assert.deepEqual(fs.readFileSync(new URL(mark, import.meta.url)), artwork);
+  assert.deepEqual(fs.readFileSync(path.join(outDir, mark)), artwork);
+  for (const { page, locale, rel, html } of pages) {
+    const images = [...html.matchAll(/<img\b[^>]*\ssrc="([^"]+)"/g)]
+      .map(([, src]) => src).filter(src => src.includes('brand-mark'));
+    assert.equal(images.length, page === 'index' ? 3 : 1, rel);
+    for (const src of images) {
+      const prefix = locale.dir ? '../' : '';
+      assert.ok(src.startsWith(`${prefix}${mark}?v=`), `${rel} -> ${src}`);
+      assert.match(src, /\?v=[0-9a-f]{10}$/, `${rel} -> ${src}`);
+    }
+    assert.doesNotMatch(html, /brand-mark\.svg/, rel);
+  }
+});
+
+test('generated wordmarks and ICO links use the supplied assets in every locale', () => {
+  const wordmark = 'brand-wordmark-mittr.svg';
+  const favicon = 'favicon-mittr.ico';
+  for (const file of [wordmark, favicon]) {
+    const artwork = fs.readFileSync(new URL(`../web/${file}`, import.meta.url));
+    assert.ok(artwork.length > 0, file);
+    assert.deepEqual(fs.readFileSync(new URL(file, import.meta.url)), artwork);
+    assert.deepEqual(fs.readFileSync(path.join(outDir, file)), artwork);
+  }
+  for (const { locale, rel, html } of pages) {
+    const prefix = locale.dir ? '../' : '';
+    const images = [...html.matchAll(/<img\b[^>]*class="www-logo-wordmark"[^>]*>/g)];
+    assert.equal(images.length, 1, rel);
+    assert.ok(images[0][0].includes(`src="${prefix}${wordmark}?v=`), rel);
+    assert.match(images[0][0], /width="132" height="36"/, rel);
+    const links = [...html.matchAll(/<link\b[^>]*type="image\/x-icon"[^>]*>/g)];
+    assert.equal(links.length, 1, rel);
+    assert.ok(links[0][0].includes(`href="${prefix}${favicon}?v=`), rel);
+    assert.doesNotMatch(html, /<use\b[^>]*brand-wordmark|(?<![\w-])(?:brand-wordmark\.svg|favicon\.ico)(?![\w.-])/, rel);
+  }
+});
+
+test('source and generated pages use the copied mittr SVG favicon in every locale', () => {
+  const favicon = 'favicon-mittr.svg';
+  const artwork = fs.readFileSync(new URL(`../web/${favicon}`, import.meta.url));
+  assert.ok(artwork.length > 0, favicon);
+  assert.deepEqual(fs.readFileSync(new URL(favicon, import.meta.url)), artwork);
+  assert.deepEqual(fs.readFileSync(path.join(outDir, favicon)), artwork);
+  for (const page of PAGES) {
+    const html = fs.readFileSync(new URL(`${page}.html`, import.meta.url), 'utf8');
+    const links = [...html.matchAll(/<link\b[^>]*type="image\/svg\+xml"[^>]*>/g)];
+    assert.equal(links.length, 1, page);
+    assert.ok(links[0][0].includes(`rel="icon"`), page);
+    assert.ok(links[0][0].includes(`href="${favicon}"`), page);
+    assert.doesNotMatch(html, /favicon\.svg/, page);
+  }
+  for (const { locale, rel, html } of pages) {
+    const prefix = locale.dir ? '../' : '';
+    const links = [...html.matchAll(/<link\b[^>]*type="image\/svg\+xml"[^>]*>/g)];
+    assert.equal(links.length, 1, rel);
+    assert.ok(links[0][0].includes(`rel="icon"`), rel);
+    assert.ok(links[0][0].includes(`href="${prefix}${favicon}?v=`), rel);
+    assert.match(links[0][0], /\?v=[0-9a-f]{10}"/, rel);
+    assert.doesNotMatch(html, /favicon\.svg/, rel);
+  }
+});
+
 test('canonical、hreflang 与 sitemap 一致且互相指向', () => {
   const canonicals = new Set(pages.map(({ html }) => canonicalOf(html)));
   assert.equal(canonicals.size, pages.length);
