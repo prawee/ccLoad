@@ -524,8 +524,11 @@ html[data-resolved-theme="dark"] ::selection {
 
 .brand-mark {
   display: block;
-  width: 54px;
+  width: 132px;
   height: 36px;
+  object-fit: contain;
+  background: #fff;
+  border-radius: var(--radius-base);
   filter: drop-shadow(0 4px 10px rgba(59, 130, 246, 0.2));
 }
 
@@ -2261,11 +2264,6 @@ html[data-resolved-theme="dark"] .time-range-selector {
     max-width: 100%;
   }
 
-  .brand-mark {
-    width: 44px;
-    height: 28px;
-  }
-
   /* 窄屏只留字母；overflow 回到 hidden，flex 最小宽度才是 0，字标可随顶栏收缩 */
   .brand-wordmark {
     width: 103px;
@@ -2553,10 +2551,6 @@ html[data-resolved-theme="dark"] .time-range-selector {
     display: none;
   }
 
-  .brand-mark {
-    width: 44px;
-    height: 32px;
-  }
 }
 
 @media (max-width: 480px) {
@@ -6672,8 +6666,10 @@ body.trend-page .chart-info {
 }
 
 .logo-icon {
-  width: 64px;
-  height: 64px;
+  width: 176px;
+  height: 48px;
+  object-fit: contain;
+  background: #fff;
   border-radius: var(--radius-xl);
   box-shadow: 0 8px 32px rgba(59, 130, 246, 0.3);
 }
@@ -7119,11 +7115,6 @@ body.web-role-api-token .filter-group--auth-token {
 
   .login-container {
     padding: var(--space-5);
-  }
-
-  .logo-icon {
-    width: 56px;
-    height: 56px;
   }
 
   .login-brand-wordmark {

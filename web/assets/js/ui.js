@@ -459,7 +459,7 @@ window.WebAuth = window.WebAuth || {
     const links = listFaviconLinks().filter((link) => link.getAttribute('data-dynamic-favicon') !== '1');
     _origFaviconLinks = links.map(snapshotFaviconLink);
     if (_origFaviconLinks.length === 0) {
-      _origFaviconLinks = [{ rel: 'icon', href: '/web/favicon.svg', type: 'image/svg+xml', sizes: '' }];
+      _origFaviconLinks = [{ rel: 'icon', href: '/web/favicon-mittr.ico', type: 'image/x-icon', sizes: '' }];
     }
   }
 
@@ -511,7 +511,7 @@ window.WebAuth = window.WebAuth || {
     const img = new Image();
     img.onload = () => { _faviconBase = img; cb(); };
     img.onerror = () => { _faviconBase = null; };
-    img.src = '/web/favicon.svg';
+    img.src = '/web/favicon-mittr.ico';
   }
 
   // 在 favicon 右上角画呼吸色点 + 数字角标
@@ -554,7 +554,7 @@ window.WebAuth = window.WebAuth || {
   function restoreFavicon() {
     rememberOriginalFavicons();
     replaceFaviconSet(_origFaviconLinks || [
-      { rel: 'icon', href: '/web/favicon.svg', type: 'image/svg+xml', sizes: '' }
+      { rel: 'icon', href: '/web/favicon-mittr.ico', type: 'image/x-icon', sizes: '' }
     ], false);
   }
 
@@ -651,37 +651,10 @@ window.WebAuth = window.WebAuth || {
     }
   }
 
-  // 顶栏 Logo 内联渲染：外部 SVG（img / use href）每次切页都要重新取文件解析，
-  // 顶栏先出现、Logo 后补上，表现为切页时 Logo 闪动。图形与 /web/brand-*.svg 保持一致；
-  // 字标 viewBox 只框字母，副标题画在框外下方，由 CSS 决定显示（桌面）或隐藏（窄屏）。
-  const BRAND_MARK_SVG = '<defs><linearGradient id="topbar-brand-gradient" x1="0" y1="0" x2="0.82" y2="1">'
-    + '<stop offset="0" stop-color="#60a5fa"/><stop offset="0.55" stop-color="#3b82f6"/><stop offset="1" stop-color="#2563eb"/>'
-    + '</linearGradient><mask id="topbar-brand-c-mask"><rect width="112" height="72" fill="#000"/>'
-    + '<circle cx="49" cy="36" r="30" fill="#fff"/><circle cx="49" cy="36" r="16" fill="#000"/><path d="M52 36 90 4v64Z" fill="#000"/>'
-    + '</mask></defs>'
-    + '<rect x="19" y="6" width="60" height="60" fill="url(#topbar-brand-gradient)" mask="url(#topbar-brand-c-mask)"/>'
-    + '<path fill="url(#topbar-brand-gradient)" fill-rule="evenodd" d="M59.4 36c4-4 8-8 12-11 8-4 16 2 16 11s-8 15-16 11c-4-3-8-7-12-11Zm17-4a4 4 0 1 0 0 8 4 4 0 0 0 0-8Z"/>';
-
-  const BRAND_WORDMARK_SVG = '<path fill="currentColor" d="M19.64 17.42 25.31 18.07Q24.83 19.84 23.77 21.13Q22.69 22.43 21.04 23.15Q19.37 23.87 16.81 23.87Q14.33 23.87 12.68 23.4Q11.03 22.94 9.85 21.91Q8.66 20.88 7.99 19.49Q7.31 18.09 7.31 15.79Q7.31 13.39 8.14 11.8Q8.73 10.62 9.78 9.69Q10.82 8.76 11.91 8.31Q13.66 7.59 16.38 7.59Q20.19 7.59 22.19 8.95Q24.19 10.32 25 12.94L19.39 13.69Q19.12 12.69 18.43 12.18Q17.73 11.68 16.56 11.68Q15.08 11.68 14.16 12.74Q13.25 13.8 13.25 15.96Q13.25 17.88 14.16 18.87Q15.07 19.87 16.47 19.87Q17.64 19.87 18.44 19.27Q19.24 18.67 19.64 17.42ZM39.05 17.42 44.72 18.07Q44.24 19.84 43.18 21.13Q42.1 22.43 40.45 23.15Q38.78 23.87 36.22 23.87Q33.74 23.87 32.09 23.4Q30.44 22.94 29.26 21.91Q28.07 20.88 27.4 19.49Q26.72 18.09 26.72 15.79Q26.72 13.39 27.55 11.8Q28.14 10.62 29.19 9.69Q30.23 8.76 31.32 8.31Q33.07 7.59 35.79 7.59Q39.6 7.59 41.6 8.95Q43.6 10.32 44.41 12.94L38.8 13.69Q38.53 12.69 37.84 12.18Q37.14 11.68 35.97 11.68Q34.49 11.68 33.57 12.74Q32.66 13.8 32.66 15.96Q32.66 17.88 33.57 18.87Q34.48 19.87 35.88 19.87Q37.05 19.87 37.85 19.27Q38.65 18.67 39.05 17.42Z"/>'
-    + '<path fill="#2563eb" d="M47.25 2.03H53.89L53.89 18.21H64.24L64.24 23.5H47.25ZM91.11 12.98 85.41 12.38Q85.73 10.89 86.34 10.03Q86.95 9.17 88.09 8.54Q88.91 8.09 90.34 7.84Q91.78 7.59 93.45 7.59Q96.13 7.59 97.75 7.89Q99.39 8.19 100.47 9.14Q101.23 9.8 101.67 11.01Q102.1 12.22 102.11 13.32L102.11 20.19Q102.11 21.29 102.24 21.91Q102.38 22.53 102.85 23.5H97.26Q96.92 22.9 96.81 22.58Q96.72 22.27 96.62 21.6Q95.44 22.72 94.29 23.21Q92.7 23.85 90.6 23.85Q87.82 23.85 86.38 22.56Q84.94 21.27 84.93 19.38Q84.94 17.61 85.98 16.47Q87.02 15.33 89.82 14.77Q93.17 14.1 94.16 13.82Q95.17 13.55 96.27 13.11Q96.28 12.02 95.83 11.58Q95.37 11.14 94.22 11.14Q92.76 11.14 92.03 11.61Q91.46 11.97 91.11 12.98ZM96.28 16.12Q95.05 16.56 93.72 16.89Q91.9 17.38 91.42 17.85Q90.91 18.33 90.91 18.94Q90.91 19.65 91.41 20.09Q91.9 20.54 92.85 20.54Q93.84 20.54 94.7 20.06Q95.56 19.57 95.92 18.88Q96.28 18.18 96.27 17.07ZM121.46 2.03 121.46 23.5H115.88L115.88 21.2Q114.7 22.67 113.74 23.18Q112.44 23.85 110.86 23.85Q107.68 23.85 106.01 21.43Q104.34 19.02 104.33 15.56Q104.33 11.69 106.19 9.64Q108.04 7.59 110.9 7.59Q112.29 7.59 113.43 8.06Q114.56 8.53 115.44 9.47L115.44 2.03ZM115.48 15.68Q115.48 13.85 114.71 12.95Q113.93 12.04 112.75 12.04Q111.71 12.04 111 12.91Q110.29 13.77 110.3 15.81Q110.3 17.71 111.02 18.6Q111.75 19.49 112.82 19.49Q113.96 19.49 114.72 18.59Q115.48 17.7 115.48 15.68Z"/>'
-    + '<path fill="#2563eb" fill-rule="evenodd" d="M65.53 15.77Q65.53 12.21 67.93 9.9Q70.34 7.59 74.42 7.59Q79.1 7.59 81.49 10.3Q83.4 12.48 83.4 15.68Q83.4 19.27 81.02 21.56Q78.64 23.85 74.43 23.85Q70.68 23.85 68.37 21.95Q65.53 19.59 65.53 15.77ZM74.47 9.87L69.76 17.02L73.46 17.02L74.46 21.58L79.16 14.42L75.46 14.42Z"/>'
-    + '<text x="7" y="35" textLength="114.5" lengthAdjust="spacingAndGlyphs" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="10" font-weight="600" fill="#475569" style="fill: var(--brand-tagline-color, #475569)">Self-hosted AI Gateway</text>';
-
-  function createInlineBrandSVG(className, viewBox, markup) {
-    const el = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    el.setAttribute('viewBox', viewBox);
-    el.setAttribute('aria-hidden', 'true');
-    el.classList.add(className);
-    el.innerHTML = markup;
-    return el;
-  }
-
   function buildTopbar(active) {
     const bar = h('header', { class: 'topbar' });
 
-    // 图标与字标独立复用；活动动画层只属于图标
-    const iconImg = createInlineBrandSVG('brand-mark', '8 6 88 60', BRAND_MARK_SVG);
-    const wordmark = createInlineBrandSVG('brand-wordmark', '0 1 132 24', BRAND_WORDMARK_SVG);
+    const iconImg = h('img', { class: 'brand-mark', src: '/web/brand-wordmark-mittr.svg?v=__VERSION__', alt: 'mittr load', width: 132, height: 36 });
     const speedLines = h('span', { class: 'brand-speed-lines', 'aria-hidden': 'true' }, [
       h('i'), h('i'), h('i'), h('i'), h('i')
     ]);
@@ -697,10 +670,9 @@ window.WebAuth = window.WebAuth || {
         target: '_blank',
         rel: 'noopener noreferrer',
         title: t('nav.githubRepo'),
-        'aria-label': 'ccLoad — Self-hosted AI Gateway'
+        'aria-label': 'mittr load'
       }, [
-        _activeWrap,
-        wordmark
+        _activeWrap
       ])
     ]);
     const role = window.getWebRole();
