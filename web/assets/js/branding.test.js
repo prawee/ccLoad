@@ -5,7 +5,8 @@ const path = require('node:path');
 const vm = require('node:vm');
 
 const source = fs.readFileSync(path.join(__dirname, 'ui.js'), 'utf8');
-const logoURL = '/web/brand-wordmark-mittr.svg?v=__VERSION__';
+const wordmarkURL = '/web/brand-wordmark-mittr.svg?v=__VERSION__';
+const markURL = '/web/brand-mark-mittr.svg?v=__VERSION__';
 const faviconURL = '/web/favicon-mittr.ico';
 
 test('all admin pages use only the supplied ICO as their browser favicon', () => {
@@ -119,7 +120,7 @@ test('topbar renders the mittr wordmark without a separate logo and retains acti
   assert.equal(wrap.attrs.class, 'brand-icon-wrap');
   const images = descendants(brand).filter(node => node.tag === 'img');
   assert.equal(images.length, 1);
-  assert.equal(images[0].attrs.src, logoURL);
+  assert.equal(images[0].attrs.src, wordmarkURL);
   assert.equal(images[0].attrs.alt, 'mittr load');
   assert.equal(images[0].attrs.width, 132);
   assert.equal(images[0].attrs.height, 36);
@@ -130,15 +131,22 @@ test('topbar renders the mittr wordmark without a separate logo and retains acti
   assert.doesNotMatch(source, /BRAND_MARK_SVG|BRAND_WORDMARK_SVG|createInlineBrandSVG/);
 });
 
-test('login renders one full mittr logo in the existing wrapper instead of the favicon and wordmark pair', () => {
+test('login renders the mittr mark at twice its intrinsic size instead of the topbar wordmark', () => {
   const html = fs.readFileSync(path.join(__dirname, '../../login.html'), 'utf8');
   const brand = html.slice(html.indexOf('<div class="login-brand">'), html.indexOf('<div class="login-form-container">'));
   assert.match(brand, /class="login-brand-row"/);
   assert.match(brand, /class="brand-logo"/);
   const images = brand.match(/<img\b[^>]*>/g);
   assert.equal(images.length, 1);
-  assert.ok(images[0].includes(`src="${logoURL}"`));
+  assert.ok(images[0].includes(`src="${markURL}"`));
   assert.match(images[0], /alt="mittr load"/);
-  assert.match(images[0], /width="176" height="48"/);
-  assert.doesNotMatch(brand, /<svg|<use|favicon|class="login-brand-wordmark"|brand-mark-mittr/);
+  assert.match(images[0], /width="176" height="120"/);
+  assert.doesNotMatch(brand, /<svg|<use|favicon|class="login-brand-wordmark"|brand-wordmark-mittr/);
+  const svg = fs.readFileSync(path.join(__dirname, '../../brand-mark-mittr.svg'), 'utf8');
+  assert.match(svg, /viewBox="0 0 88 60"/);
+  const css = fs.readFileSync(path.join(__dirname, '../css/styles.css'), 'utf8');
+  const rules = [...css.matchAll(/\.logo-icon\s*\{([^}]+)\}/g)];
+  const sizing = rules[rules.length - 1][1];
+  assert.match(sizing, /\bwidth:\s*176px;/);
+  assert.match(sizing, /\bheight:\s*120px;/);
 });
