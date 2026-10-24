@@ -1,0 +1,160 @@
+name: Mittr PostgreSQL rehearsal
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/mittr-postgres-rehearsal.yml'
+      - 'scripts/mittr_postgres_rehearsal.py'
+      - 'scripts/test_mittr_postgres_rehearsal*.py'
+      - 'docker-compose.mittr-postgres.yml'
+      - '.env.mittr-postgres.example'
+      - 'README.mittr.md'
+  push:
+    paths:
+      - '.github/workflows/mittr-postgres-rehearsal.yml'
+      - 'scripts/mittr_postgres_rehearsal.py'
+      - 'scripts/test_mittr_postgres_rehearsal*.py'
+      - 'docker-compose.mittr-postgres.yml'
+      - '.env.mittr-postgres.example'
+      - 'README.mittr.md'
+  workflow_dispatch:
+    inputs:
+      simulate_failure:
+        description: Leave an owned fixture running and fail to verify cleanup
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mittr-postgres-rehearsal-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  rehearsal:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      MITTR_PG_TEST_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}-rehearsal
+      TMPDIR: ${{ runner.temp }}/mittr-postgres-rehearsal-${{ github.run_id }}-${{ github.run_attempt }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+
+      - name: Prepare private test directory
+        run: mkdir -m 700 "$TMPDIR"
+
+      - name: Run unit tests
+        run: python3 -B -m unittest scripts.test_mittr_postgres_rehearsal -v
+
+      - name: Pull fixture image
+        run: docker pull postgres:18-alpine
+
+      - name: Run isolated Docker integration tests
+        timeout-minutes: 10
+        env:
+          MITTR_PG_DOCKER_INTEGRATION: '1'
+        run: python3 -B -m unittest scripts.test_mittr_postgres_rehearsal_integration -v
+
+      - name: Simulate failure with owned fixture
+        if: ${{ github.event_name == 'workflow_dispatch' && inputs.simulate_failure }}
+        timeout-minutes: 1
+        env:
+          SIMULATE_FAILURE: ${{ inputs.simulate_failure }}
+        run: |
+          python3 -B - <<'PY'
+          import os
+          import re
+          import subprocess
+
+          if os.environ.get('SIMULATE_FAILURE') != 'true':
+              raise SystemExit('Simulation requires explicit true input')
+          run_id = os.environ['MITTR_PG_TEST_RUN_ID']
+          if not re.fullmatch(r'[A-Za-z0-9][A-Za-z0-9_.-]{0,127}', run_id):
+              raise RuntimeError('Invalid fixture run identity')
+          result = subprocess.run(
+              ['docker', 'create', '--network=none',
+               '--label', 'io.mittr.postgres-rehearsal-test-run=' + run_id,
+               '--label', 'io.mittr.postgres-rehearsal=simulated-failure',
+               '--tmpfs', '/var/lib/postgresql',
+               '--entrypoint', 'sleep', 'postgres:18-alpine', '300'],
+              check=True, capture_output=True, text=True, timeout=30)
+          identity = result.stdout.strip()
+          if not re.fullmatch(r'[a-f0-9]{64}', identity):
+              raise RuntimeError('Invalid fixture container identity')
+          subprocess.run(['docker', 'start', identity], check=True,
+                         capture_output=True, timeout=15)
+          print('simulated failure: owned running container ' + identity, flush=True)
+          raise SystemExit(1)
+          PY
+
+      - name: Clean up owned test fixtures and dumps
+        if: ${{ always() }}
+        timeout-minutes: 2
+        shell: bash
+        run: |
+          python3 -B - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          import shutil
+          import subprocess
+
+          run_id = os.environ['MITTR_PG_TEST_RUN_ID']
+          try:
+              result = subprocess.run(
+                  ['docker', 'ps', '-aq',
+                   '--filter', 'label=io.mittr.postgres-rehearsal-test-run=' + run_id,
+                   '--filter', 'label=io.mittr.postgres-rehearsal'],
+                  check=True, capture_output=True, text=True, timeout=30)
+              identities = result.stdout.split()
+              print('Owned containers before cleanup: ' + str(len(identities)), flush=True)
+              volumes = set()
+              if identities:
+                  inspected = subprocess.run(
+                      ['docker', 'inspect', *identities], check=True,
+                      capture_output=True, text=True, timeout=30)
+                  for container in json.loads(inspected.stdout):
+                      volumes.update(mount['Name'] for mount in container['Mounts']
+                                     if mount['Type'] == 'volume')
+                  subprocess.run(['docker', 'rm', '-f', '-v', *identities],
+                                 check=True, timeout=60)
+              remaining = subprocess.run(result.args, check=True,
+                                         capture_output=True, text=True, timeout=30)
+              if remaining.stdout.split():
+                  raise RuntimeError('Owned containers remain after cleanup')
+              listed = subprocess.run(['docker', 'volume', 'ls', '-q'], check=True,
+                                      capture_output=True, text=True, timeout=30)
+              if volumes.intersection(listed.stdout.split()):
+                  raise RuntimeError('Owned container volumes remain after cleanup')
+              labeled = subprocess.run(
+                  ['docker', 'volume', 'ls', '-q',
+                   '--filter', 'label=io.mittr.postgres-rehearsal-test-run=' + run_id,
+                   '--filter', 'label=io.mittr.postgres-rehearsal'],
+                  check=True, capture_output=True, text=True, timeout=30)
+              if labeled.stdout.split():
+                  raise RuntimeError('Owned labeled volumes remain after cleanup')
+              print('Cleanup verified: 0 owned containers, 0 owned volumes; checked ' +
+                    str(len(volumes)) + ' captured volume names', flush=True)
+          finally:
+              directory = Path(os.environ['TMPDIR'])
+              expected = Path(os.environ['RUNNER_TEMP']) / (
+                  'mittr-postgres-rehearsal-' + os.environ['GITHUB_RUN_ID'] + '-' +
+                  os.environ['GITHUB_RUN_ATTEMPT'])
+              if directory != expected or directory.is_symlink():
+                  raise RuntimeError('Refusing cleanup outside dedicated test directory')
+              if directory.exists():
+                  shutil.rmtree(directory)
+              if directory.exists():
+                  raise RuntimeError('Dedicated test directory remains after cleanup')
+              print('Cleanup verified: dedicated test directory absent', flush=True)
+          PY
