@@ -154,6 +154,34 @@ class RehearsalTests(unittest.TestCase):
                           '.env.mittr.local', 'mittr-postgres-postgres-1', 'mittr-load-app-1'):
             self.assertNotIn(forbidden, workflow)
 
+    def test_ci_job_env_does_not_use_runner_context(self):
+        job = self.workflow().split('  rehearsal:\n', 1)[1].split('    steps:\n', 1)[0]
+        self.assertNotRegex(job, r'\$\{\{[^}]*\brunner\s*\.')
+        self.assertNotIn('TMPDIR:', job)
+
+    def test_ci_preparation_exports_step_tmpdir_for_subsequent_tests(self):
+        workflow = self.workflow()
+        preparation = workflow.split('      - name: Prepare private test directory\n', 1)[1].split(
+            '      - name:', 1)[0]
+        self.assertIn(
+            '        env:\n          TMPDIR: ${{ runner.temp }}/mittr-postgres-rehearsal-'
+            '${{ github.run_id }}-${{ github.run_attempt }}\n', preparation)
+        self.assertIn('mkdir -m 700 "$TMPDIR"', preparation)
+        self.assertIn('printf \'TMPDIR=%s\\n\' "$TMPDIR" >> "$GITHUB_ENV"', preparation)
+        self.assertLess(preparation.index('mkdir -m 700'), preparation.index('>> "$GITHUB_ENV"'))
+        self.assertLess(workflow.index('- name: Prepare private test directory'),
+                        workflow.index('- name: Run unit tests'))
+
+    def test_ci_cleanup_has_independent_step_tmpdir_even_if_preparation_fails(self):
+        cleanup = self.workflow().split(
+            '      - name: Clean up owned test fixtures and dumps\n', 1)[1]
+        self.assertIn('        if: ${{ always() }}\n', cleanup)
+        self.assertIn(
+            '        env:\n          TMPDIR: ${{ runner.temp }}/mittr-postgres-rehearsal-'
+            '${{ github.run_id }}-${{ github.run_attempt }}\n', cleanup)
+        self.assertNotIn('${{ env.TMPDIR }}', cleanup)
+        self.assertNotIn('${{ steps.', cleanup)
+
     def workflow_script(self, step):
         block = self.workflow().split('      - name: ' + step, 1)[1]
         script = block.split("python3 -B - <<'PY'\n", 1)[1].split('          PY', 1)[0]

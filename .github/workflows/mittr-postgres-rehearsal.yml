@@ -38,7 +38,6 @@ jobs:
     timeout-minutes: 15
     env:
       MITTR_PG_TEST_RUN_ID: ${{ github.run_id }}-${{ github.run_attempt }}-rehearsal
-      TMPDIR: ${{ runner.temp }}/mittr-postgres-rehearsal-${{ github.run_id }}-${{ github.run_attempt }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -51,7 +50,11 @@ jobs:
           python-version: '3.12'
 
       - name: Prepare private test directory
-        run: mkdir -m 700 "$TMPDIR"
+        env:
+          TMPDIR: ${{ runner.temp }}/mittr-postgres-rehearsal-${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          mkdir -m 700 "$TMPDIR"
+          printf 'TMPDIR=%s\n' "$TMPDIR" >> "$GITHUB_ENV"
 
       - name: Run unit tests
         run: python3 -B -m unittest scripts.test_mittr_postgres_rehearsal -v
@@ -100,6 +103,8 @@ jobs:
       - name: Clean up owned test fixtures and dumps
         if: ${{ always() }}
         timeout-minutes: 2
+        env:
+          TMPDIR: ${{ runner.temp }}/mittr-postgres-rehearsal-${{ github.run_id }}-${{ github.run_attempt }}
         shell: bash
         run: |
           python3 -B - <<'PY'
