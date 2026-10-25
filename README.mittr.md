@@ -288,11 +288,11 @@ Integration ต้องมี `postgres:18-alpine` อยู่แล้ว ไ
 
 CI แยกใน `.github/workflows/mittr-postgres-rehearsal.yml` ทำงานบน `ubuntu-latest` เมื่อ pull request/push เปลี่ยนไฟล์ rehearsal tests/tool, PostgreSQL Compose/example env, README นี้ หรือ workflow เอง และสั่งผ่าน `workflow_dispatch` ได้ ใช้ Python 3.12 รัน unit tests ด้วย module `scripts.test_mittr_postgres_rehearsal` แล้ว pull เฉพาะ `postgres:18-alpine` และ opt-in integration ไม่ต้องมี image `mittr-load`, application secrets, Compose หรือ SQLite จริง สิทธิ์มีเพียง `contents: read` และไม่เก็บ checkout credentials
 
-Fixture Docker wrapper ใน tests เพิ่ม label `io.mittr.postgres-rehearsal-test-run=$MITTR_PG_TEST_RUN_ID` ให้ source/protected/target ทุก container โดย CI ใช้ run ID + attempt + job เป็นเจ้าของแยกกัน ไม่เปลี่ยน production tool หลัง tests มี `always()` cleanup (รวม failure/cancellation ที่ runner ยังทำงานได้) เลือกเฉพาะ exact run label ร่วมกับ ownership label `io.mittr.postgres-rehearsal` แล้ว `docker rm -f -v` ไม่มี broad prune และไม่แตะ run อื่น Dump อยู่ใน dedicated directory ใต้ `runner.temp` ผ่าน `TMPDIR` และ cleanup ลบเฉพาะ directory นี้แม้ Docker cleanup fail; test failure ยังคงทำให้ job fail ไม่มี artifact/raw database logs กำหนด job timeout 15 นาทีและ integration 10 นาที แต่ runner/daemon crash หรือ force cancellation ยังไม่รับประกันว่า cleanup step จะทำงาน
+Fixture Docker wrapper ใน tests เพิ่ม label `io.mittr.postgres-rehearsal-test-run=$MITTR_PG_TEST_RUN_ID` ให้ source/protected/target ทุก container โดย CI ใช้ run ID + attempt + job เป็นเจ้าของแยกกัน ไม่เปลี่ยน production tool หลัง tests มี `always()` cleanup (รวม failure/cancellation ที่ runner ยังทำงานได้) เลือกเฉพาะ exact run label ร่วมกับ ownership label `io.mittr.postgres-rehearsal` แล้ว `docker rm -f -v` ไม่มี broad prune และไม่แตะ run อื่น Dump อยู่ใน dedicated directory ใต้ `runner.temp` ผ่าน `TMPDIR` และ cleanup ลบเฉพาะ directory นี้แม้ Docker cleanup fail; test failure ยังคงทำให้ job fail ไม่มี artifact/raw database logs กำหนด job timeout 15 นาที, integration 10 นาที, simulation 1 นาที และ cleanup 2 นาที โดย timeout ของแต่ละ step ไม่ได้จองเวลาเพิ่มนอก job timeout; `always()` ไม่รับประกันว่า cleanup จะจบเมื่อหมดเวลา job, runner/daemon crash หรือ force cancellation
 
 ### รัน CI ปกติและจำลองล้มเหลว
 
-ผ่าน GitHub Actions เลือก workflow `Mittr PostgreSQL rehearsal` แล้วเลือก **Run workflow**, branch `develop` และค่า `simulate_failure` ตามกรณี ด้าน CLI ต้อง login `gh` และมีสิทธิ์ dispatch workflow ใน repository; branch ที่เลือกต้องมี workflow/tests รุ่นที่ต้องการตรวจ
+ชื่อใน source YAML คือ `Mittr PostgreSQL rehearsal` แต่ ณ การตรวจครั้งนี้ GitHub ลงทะเบียน/แสดงชื่อเป็น `.github/workflows/mittr-postgres-rehearsal.yml` (workflow ID `394739590`); ค้นด้วยชื่อไฟล์นี้หากไม่พบชื่อ display name ผ่าน GitHub Actions หากมีปุ่ม **Run workflow** ให้เลือก branch `develop` และค่า boolean `simulate_failure` ตามกรณี หากไม่มีปุ่มให้ใช้ CLI ด้านล่าง ซึ่งตรวจแล้วว่า dispatch บน `develop` ได้ ไม่รับประกันว่า UI จะมีปุ่มเมื่อ workflow ยังไม่อยู่บน default branch ด้าน CLI ต้อง login `gh` และมีสิทธิ์ dispatch workflow ใน repository; branch ที่เลือกต้องมี workflow/tests รุ่นที่ต้องการตรวจ
 
 รอบปกติ:
 
@@ -300,7 +300,7 @@ Fixture Docker wrapper ใน tests เพิ่ม label `io.mittr.postgres-reh
 gh workflow run mittr-postgres-rehearsal.yml --repo prawee/ccLoad --ref develop -f simulate_failure=false
 ```
 
-รอรอบปกติจบก่อนเริ่มรอบจำลอง เพราะ concurrency ของ workflow บน branch เดียวกันตั้ง `cancel-in-progress: true` รอบใหม่จะยกเลิกรอบก่อนที่ยังทำงานอยู่
+รอรอบปกติจบก่อนเริ่มรอบจำลอง เพราะ concurrency group ใช้ `github.workflow` + `github.ref` และตั้ง `cancel-in-progress: true` รอบใหม่ที่อยู่ group เดียวกัน (รวม push กับ manual dispatch บน branch เดียวกัน) จะยกเลิกรอบก่อนที่ยังทำงานอยู่ ส่วน pull request ใช้ PR ref จึงไม่ใช่ group เดียวกับ branch ref โดยอัตโนมัติ
 
 รอบจำลองล้มเหลว:
 
@@ -332,7 +332,7 @@ gh run view RUN_ID --repo prawee/ccLoad --log
 `watch --exit-status` ของรอบจำลองจะคืน nonzero ตามตั้งใจ ไม่ควรสรุปว่า cleanup ล้มเหลวจาก exit status รวมเพียงอย่างเดียว ให้ดู step cleanup และหลักฐานต่อไปนี้ใน log:
 
 - `Owned containers before cleanup: 1` ในรอบจำลองที่ tests/teardown ก่อนหน้าสำเร็จ แสดงว่ามี fixture ที่ cleanup ต้องลบจริง; รอบปกติอาจเป็น 0
-- `Cleanup verified: 0 owned containers, 0 owned volumes; checked ... captured volume names` แสดงว่าตรวจซ้ำหลังลบแล้ว ไม่เหลือ container ที่ตรง labels, volume ที่จับชื่อไว้ หรือ volume ที่ตรง labels ของรอบนั้น
+- `Cleanup verified: 0 owned containers, 0 owned volumes; checked ... captured volume names` แสดงว่าตรวจซ้ำหลังลบแล้ว ไม่เหลือ container ที่ตรง labels, volume ที่จับชื่อไว้ หรือ volume ที่ตรง labels ของรอบนั้น Workflow cleanup ไม่ตรวจ networks; การตรวจ networks ที่กล่าวในส่วน integration เป็น assertion ของ test teardown ตาม ownership token แต่ละ fixture และ fixtures ใช้ `--network=none` ไม่ได้สร้าง network แยก
 - `Cleanup verified: dedicated test directory absent` แสดงว่า directory ของ dump/fixture ใต้ `runner.temp` ถูกลบแล้ว แม้ขั้น Docker cleanup เกิดข้อผิดพลาด `finally` ยังพยายามลบ directory นี้ แต่ step จะไม่ผ่านหากการตรวจใดล้มเหลว
 
 หาก cleanup step fail หรือขาดหลักฐาน ห้ามถือว่าล้างสำเร็จ ให้ตรวจ run ID/attempt และ resource labels ก่อนทำ manual cleanup; ห้ามใช้ `docker system prune` หรือคำสั่งลบกว้าง ๆ ข้อจำกัด runner/daemon crash, SIGKILL และ force cancellation ยังมีอยู่ตามที่ระบุข้างต้น
