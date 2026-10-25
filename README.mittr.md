@@ -290,6 +290,66 @@ CI แยกใน `.github/workflows/mittr-postgres-rehearsal.yml` ทำงา
 
 Fixture Docker wrapper ใน tests เพิ่ม label `io.mittr.postgres-rehearsal-test-run=$MITTR_PG_TEST_RUN_ID` ให้ source/protected/target ทุก container โดย CI ใช้ run ID + attempt + job เป็นเจ้าของแยกกัน ไม่เปลี่ยน production tool หลัง tests มี `always()` cleanup (รวม failure/cancellation ที่ runner ยังทำงานได้) เลือกเฉพาะ exact run label ร่วมกับ ownership label `io.mittr.postgres-rehearsal` แล้ว `docker rm -f -v` ไม่มี broad prune และไม่แตะ run อื่น Dump อยู่ใน dedicated directory ใต้ `runner.temp` ผ่าน `TMPDIR` และ cleanup ลบเฉพาะ directory นี้แม้ Docker cleanup fail; test failure ยังคงทำให้ job fail ไม่มี artifact/raw database logs กำหนด job timeout 15 นาทีและ integration 10 นาที แต่ runner/daemon crash หรือ force cancellation ยังไม่รับประกันว่า cleanup step จะทำงาน
 
+### รัน CI ปกติและจำลองล้มเหลว
+
+ผ่าน GitHub Actions เลือก workflow `Mittr PostgreSQL rehearsal` แล้วเลือก **Run workflow**, branch `develop` และค่า `simulate_failure` ตามกรณี ด้าน CLI ต้อง login `gh` และมีสิทธิ์ dispatch workflow ใน repository; branch ที่เลือกต้องมี workflow/tests รุ่นที่ต้องการตรวจ
+
+รอบปกติ:
+
+```bash
+gh workflow run mittr-postgres-rehearsal.yml --repo prawee/ccLoad --ref develop -f simulate_failure=false
+```
+
+รอรอบปกติจบก่อนเริ่มรอบจำลอง เพราะ concurrency ของ workflow บน branch เดียวกันตั้ง `cancel-in-progress: true` รอบใหม่จะยกเลิกรอบก่อนที่ยังทำงานอยู่
+
+รอบจำลองล้มเหลว:
+
+```bash
+gh workflow run mittr-postgres-rehearsal.yml --repo prawee/ccLoad --ref develop -f simulate_failure=true
+```
+
+โหมดนี้รัน unit/integration ตามปกติก่อน แล้ว step `Simulate failure with owned fixture` สร้างและเปิด container ชั่วคราวที่ติด ownership/run labels โดยไม่มี network/port ใช้ tmpfs และจงใจจบด้วย exit code 1 เพื่อทดสอบ cleanup นอก test teardown ไม่แก้ production script และไม่ลดเกณฑ์ผ่านของ tests หาก tests ก่อนหน้านี้ไม่ผ่าน step จำลองจะถูกข้าม จึงต้องตรวจว่า failure เกิดจาก step จำลองจริง
+
+| จุดตรวจ | รอบปกติ | รอบจำลองล้มเหลว |
+| --- | --- | --- |
+| `Run unit tests` | ผ่าน | ผ่าน |
+| `Run isolated Docker integration tests` | ผ่าน | ผ่าน |
+| `Simulate failure with owned fixture` | ข้าม | ล้มเหลวตามตั้งใจ พร้อม log `simulated failure: owned running container ...` |
+| `Clean up owned test fixtures and dumps` | ผ่าน | ผ่าน แม้ step ก่อนหน้าล้มเหลว |
+| ผลรวม workflow | Success | Failure ตามตั้งใจ ไม่ใช่ test suite ล้มเหลว |
+
+### ตรวจหลักฐาน cleanup
+
+หา run ID ของรอบที่เพิ่งสั่ง แล้วดูสถานะและ log (แทน `RUN_ID` ด้วยเลขจริง):
+
+```bash
+gh run list --repo prawee/ccLoad --workflow mittr-postgres-rehearsal.yml --branch develop --event workflow_dispatch --limit 5
+gh run watch RUN_ID --repo prawee/ccLoad --exit-status
+gh run view RUN_ID --repo prawee/ccLoad --json conclusion,jobs,url
+gh run view RUN_ID --repo prawee/ccLoad --log
+```
+
+`watch --exit-status` ของรอบจำลองจะคืน nonzero ตามตั้งใจ ไม่ควรสรุปว่า cleanup ล้มเหลวจาก exit status รวมเพียงอย่างเดียว ให้ดู step cleanup และหลักฐานต่อไปนี้ใน log:
+
+- `Owned containers before cleanup: 1` ในรอบจำลองที่ tests/teardown ก่อนหน้าสำเร็จ แสดงว่ามี fixture ที่ cleanup ต้องลบจริง; รอบปกติอาจเป็น 0
+- `Cleanup verified: 0 owned containers, 0 owned volumes; checked ... captured volume names` แสดงว่าตรวจซ้ำหลังลบแล้ว ไม่เหลือ container ที่ตรง labels, volume ที่จับชื่อไว้ หรือ volume ที่ตรง labels ของรอบนั้น
+- `Cleanup verified: dedicated test directory absent` แสดงว่า directory ของ dump/fixture ใต้ `runner.temp` ถูกลบแล้ว แม้ขั้น Docker cleanup เกิดข้อผิดพลาด `finally` ยังพยายามลบ directory นี้ แต่ step จะไม่ผ่านหากการตรวจใดล้มเหลว
+
+หาก cleanup step fail หรือขาดหลักฐาน ห้ามถือว่าล้างสำเร็จ ให้ตรวจ run ID/attempt และ resource labels ก่อนทำ manual cleanup; ห้ามใช้ `docker system prune` หรือคำสั่งลบกว้าง ๆ ข้อจำกัด runner/daemon crash, SIGKILL และ force cancellation ยังมีอยู่ตามที่ระบุข้างต้น
+
+ตัวอย่างที่ตรวจบน GitHub แล้ว (เป็นผล ณ commit `4f453b3d` ไม่ใช่การรับรอง commit ถัดไป):
+
+- [รอบปกติ 40050290215](https://github.com/prawee/ccLoad/actions/runs/40050290215): unit 33 + integration 9 ผ่าน และ cleanup ผ่าน
+- [รอบจำลอง 40050413002](https://github.com/prawee/ccLoad/actions/runs/40050413002): tests ผ่าน, step จำลองล้มเหลวตามตั้งใจ, cleanup ลบ fixture 1 ตัวและยืนยัน 0 container/volume พร้อม directory ถูกลบ
+
+### การแยกจาก production secrets
+
+- CI ไม่อ้างอิง `secrets.*`, production environment หรือไฟล์ `.env.*.local`; ไม่ต้องสร้าง repository secret เพื่อรันชุดนี้ ห้ามเพิ่ม production DSN/API key หรือ mount data จริงลง fixture
+- Source/protected PostgreSQL ใน integration เป็น container สังเคราะห์ที่สร้างใหม่ รวม credential และข้อมูลทดสอบ ไม่ใช่ `mittr-postgres-postgres-1` หรือแอป SQLite จริง CI ไม่เรียก CLI rehearsal ด้วย source ค่าเริ่มต้นที่ชี้ระบบ local
+- Target ทุกตัวไม่มี network/host port หรือ bind mount ฐานจริง การ cleanup เลือก exact run ID + attempt + job ร่วม ownership label จึงไม่ลบทรัพยากรของรอบอื่น
+- `gh` บนเครื่องผู้ดูแลใช้ GitHub authentication เพื่อ dispatch/อ่านผลเท่านั้น ไม่ส่ง credential ฐานข้อมูลขึ้น CI; workflow ใช้ token สิทธิ์ `contents: read` สำหรับ checkout และตั้ง `persist-credentials: false`
+- ไม่ upload dump หรือ raw database logs เป็น artifact; dump ชั่วคราวไม่ได้เข้ารหัส แม้เป็นข้อมูลจำลองก็จำกัดสิทธิ์และลบหลังรัน
+
 ขอบเขต integration นี้ยังเป็น synthetic PostgreSQL 18 local Docker เท่านั้น ไม่พิสูจน์ production recovery, concurrent writers, host/daemon crash, SIGKILL หรือ storage failure จริง
 
 ## ขอบเขตการตรวจสอบ image 1.0.0
