@@ -10,6 +10,7 @@ from unittest.mock import Mock, patch
 
 from scripts import mittr_postgres_rehearsal as tool
 from scripts.test_mittr_postgres_rehearsal_integration import FixtureDocker, RUN_LABEL
+from scripts import test_mittr_postgres_rehearsal_integration as integration
 
 
 class RehearsalTests(unittest.TestCase):
@@ -421,6 +422,307 @@ class RehearsalTests(unittest.TestCase):
         with patch.object(tool, 'rehearse', side_effect=KeyboardInterrupt()), contextlib.redirect_stderr(io.StringIO()):
             self.assertEqual(tool.main(['--run']), 1)
         self.assertEqual(signal.getsignal(signal.SIGTERM), previous)
+
+
+class WALDiagnosticsTests(unittest.TestCase):
+    def target(self):
+        target = tool.Target(Mock(), 'image', [])
+        target.identity = 'a' * 64
+        target.attempted = True
+        return target
+
+    def test_allowlisted_metadata_only(self):
+        raw = (b'rmgr: Heap2 len (rec/tot): 1/2, tx: 0, lsn: 0/10, prev 0/0, desc: PRUNE_ON_ACCESS secret SQL password\n'
+               b'rmgr: Heap2 len (rec/tot): 1/2, tx: 0, lsn: 0/18, prev 0/10, desc: PRUNE_ON_ACCESS other rows\n'
+               b'rmgr: Evil        len x desc: PASSWORD secret\n'
+               b'rmgr: Heap2       len x desc: SECRET credentials\n'
+               b'::error::secret Docker error SELECT password\n')
+        counts, omitted, decoded, valid = integration.wal_summary(raw, '0/10', '0/20')
+        self.assertEqual(dict(counts), {('Heap2', 'PRUNE_ON_ACCESS'): 2})
+        self.assertTrue(omitted)
+        wal = integration.FixtureWAL(self.target())
+        wal.baseline = '0/10'
+        with patch.object(wal, 'owned', return_value=True), patch.object(wal, 'position', return_value='0/20'), \
+                patch.object(wal, 'read_position', return_value='000000010000000000000001|000000010000000000000001'), \
+                patch.object(integration, 'bounded_docker', return_value=(raw, 'unavailable-or-active-eof')) as run:
+            report = wal.report()
+        self.assertIn('Heap2/PRUNE_ON_ACCESS=2', report)
+        self.assertIn('unavailable-or-active-eof', report)
+        for secret in ('secret', 'password', 'credentials', 'SELECT', '::error::', 'Evil'):
+            self.assertNotIn(secret, report)
+        command = run.call_args.args[0]
+        self.assertEqual(command[:8], ['exec', wal.source.identity, 'timeout', '-s', 'KILL', '4', 'sh', '-c'])
+        self.assertIn('--start=0/10 --end=0/20 --limit=256', command[-1])
+        self.assertIn('--path="$PGDATA/pg_wal"', command[-1])
+        self.assertTrue(command[-1].endswith('000000010000000000000001 000000010000000000000001'))
+
+    def test_explicit_segments_avoid_zero_preallocated_header(self):
+        wal = integration.FixtureWAL(self.target())
+        wal.baseline = '0/1000000'
+        segments = '000000010000000000000001|000000010000000000000002'
+        observed = []
+        def docker(args):
+            command = args[-1]
+            observed.append(command)
+            if 'psql' in command:
+                return segments.encode(), 'ok'
+            if command.endswith(segments.replace('|', ' ')):
+                return b'rmgr: Transaction len (rec/tot): 24/24, tx: 1, lsn: 0/1000028, prev 0/FFFFF0, desc: COMMIT suppressed\n', 'ok'
+            return (b'pg_waldump: error: invalid WAL segment size in WAL file '
+                    b'"000000010000000000000003" (0 bytes)\n', 'unavailable-or-active-eof')
+        with patch.object(wal, 'owned', return_value=True), patch.object(wal, 'position', return_value='0/2000000'), \
+                patch.object(integration, 'bounded_docker', side_effect=docker):
+            report = wal.report()
+        self.assertIn('records=1 status=ok', report)
+        self.assertIn('Transaction/COMMIT=1', report)
+        self.assertIn("pg_walfile_name('0/1000000'::pg_lsn + 1)", observed[0])
+        self.assertIn("pg_walfile_name('0/2000000'::pg_lsn)", observed[0])
+        self.assertIn('default_transaction_read_only=on', observed[0])
+        for command in observed:
+            for forbidden in ('checkpoint', 'switch_wal', 'pg_log_standby_snapshot', 'cp ', '--follow', '--save-fullpage'):
+                self.assertNotIn(forbidden, command.lower())
+        self.assertNotIn('suppressed', report)
+
+    def test_invalid_segments_and_reversed_lsn_do_not_decode(self):
+        wal = integration.FixtureWAL(self.target())
+        wal.baseline = '0/10'
+        for segments in ('', 'secret', 'A' * 24 + '|$(secret)', 'A' * 24 + '|' + 'a' * 24):
+            with patch.object(wal, 'owned', return_value=True), patch.object(wal, 'position', return_value='0/20'), \
+                    patch.object(wal, 'read_position', return_value=segments), \
+                    patch.object(integration, 'bounded_docker') as run:
+                self.assertIn('segment names missing', wal.report())
+                run.assert_not_called()
+        for segments in ('000000000000000000000001|000000000000000000000001',
+                         '000000010000000000000001|000000020000000000000001',
+                         '000000010000000000000002|000000010000000000000001'):
+            with patch.object(wal, 'owned', return_value=True), patch.object(wal, 'position', return_value='0/20'), \
+                    patch.object(wal, 'read_position', return_value=segments), \
+                    patch.object(integration, 'bounded_docker') as run:
+                self.assertIn('segment order or timeline', wal.report())
+                run.assert_not_called()
+        with patch.object(wal, 'owned', return_value=True), patch.object(wal, 'position', return_value='0/F'), \
+                patch.object(integration, 'bounded_docker') as run:
+            self.assertIn('LSN order', wal.report())
+            run.assert_not_called()
+
+    def test_ownership_mismatch_and_arbitrary_target_refused(self):
+        wal = integration.FixtureWAL(self.target())
+        with patch.object(integration, 'bounded_docker', return_value=(b'foreign secret', 'ok')) as run:
+            self.assertIn('ownership not verified', wal.report())
+            self.assertEqual(run.call_count, 1)
+            self.assertEqual(run.call_args.args[0][0], 'inspect')
+        for attribute, value in (('identity', 'arbitrary'), ('name', 'production'), ('attempted', False),
+                                 ('token', 'invalid'), ('protected', {'a' * 64})):
+            target = self.target()
+            setattr(target, attribute, value)
+            with patch.object(integration, 'bounded_docker') as run:
+                self.assertFalse(integration.FixtureWAL(target).owned())
+                run.assert_not_called()
+
+    def test_missing_baseline_unchanged_and_malformed_lsn(self):
+        wal = integration.FixtureWAL(self.target())
+        with patch.object(wal, 'owned', return_value=True), patch.object(wal, 'position', return_value='0/10'), \
+                patch.object(integration, 'bounded_docker') as run:
+            self.assertIn('baseline missing', wal.report())
+            wal.start()
+            self.assertIn('records=0 status=unchanged', wal.report())
+            wal.baseline = '0/10; secret'
+            self.assertIn('baseline missing', wal.report())
+            run.assert_not_called()
+        with patch.object(wal, 'owned', return_value=True), \
+                patch.object(integration, 'bounded_docker', return_value=(b'secret\n0/10', 'ok')):
+            self.assertIsNone(wal.position())
+
+    def test_readonly_position_and_timeout_safe_start(self):
+        wal = integration.FixtureWAL(self.target())
+        with patch.object(wal, 'owned', return_value=True), \
+                patch.object(integration, 'bounded_docker', return_value=(b'0/10\n', 'ok')) as run:
+            self.assertEqual(wal.position(), '0/10')
+            command = run.call_args.args[0][-1]
+            self.assertIn('default_transaction_read_only=on', command)
+            self.assertIn('SELECT pg_current_wal_flush_lsn()::text;', command)
+            self.assertNotIn('checkpoint', command.lower())
+            self.assertNotIn('switch_wal', command)
+        with patch.object(wal, 'owned', side_effect=RuntimeError('secret')):
+            wal.start()
+        self.assertIsNone(wal.baseline)
+
+    def run_case(self, mode, diagnostic_error=False):
+        events = []
+        class Probe(unittest.TestCase):
+            def setUp(inner):
+                inner.addCleanup(lambda: events.append('cleanup'))
+                inner.addCleanup(integration.report_failed_fixture, inner)
+                if mode == 'partial':
+                    raise RuntimeError('original setup')
+                inner.wal = Mock()
+                def report():
+                    events.append('diagnostic')
+                    if diagnostic_error:
+                        raise RuntimeError('diagnostic secret')
+                    return 'WAL evidence: safe'
+                inner.wal.report.side_effect = report
+            def tearDown(inner):
+                if mode == 'teardown':
+                    raise RuntimeError('original teardown')
+            def runTest(inner):
+                if mode == 'teardown':
+                    return
+                if mode == 'expected':
+                    with inner.assertRaises(ValueError):
+                        raise ValueError('expected')
+                elif mode == 'subtest':
+                    with inner.subTest(value=1):
+                        inner.fail('original subtest')
+                elif mode == 'error':
+                    raise ValueError('original error')
+                else:
+                    inner.fail('original failure')
+        result = unittest.TestResult()
+        with contextlib.redirect_stderr(io.StringIO()) as output:
+            Probe().run(result)
+        return result, events, output.getvalue()
+
+    def test_real_unittest_failures_errors_subtests_before_cleanup(self):
+        for mode in ('failure', 'error', 'subtest', 'teardown'):
+            result, events, output = self.run_case(mode)
+            self.assertEqual(events, ['diagnostic', 'cleanup'])
+            self.assertEqual(len(result.failures) + len(result.errors), 1)
+            self.assertIn('original', (result.failures + result.errors)[0][1])
+            self.assertEqual(output, 'WAL evidence: safe\n')
+
+    def test_expected_errors_do_not_emit(self):
+        result, events, output = self.run_case('expected')
+        self.assertTrue(result.wasSuccessful())
+        self.assertEqual(events, ['cleanup'])
+        self.assertEqual(output, '')
+
+    def test_partial_setup_and_diagnostic_error_preserve_original_cleanup(self):
+        for mode, broken in (('partial', False), ('failure', True)):
+            result, events, output = self.run_case(mode, broken)
+            self.assertEqual(events[-1], 'cleanup')
+            self.assertEqual(len(result.failures) + len(result.errors), 1)
+            self.assertIn('original', (result.failures + result.errors)[0][1])
+            self.assertIn('unavailable', output)
+            captured = output + ''.join(traceback for _, traceback in result.failures + result.errors)
+            self.assertNotIn('secret', captured)
+
+    def test_exact_ownership_identity_name_label_and_pre_read_recheck(self):
+        target = self.target()
+        wal = integration.FixtureWAL(target)
+        for identity, name, labels in (
+                (target.identity, '/' + target.name, {tool.LABEL: target.token}),
+                ('b' * 64, '/' + target.name, {tool.LABEL: target.token}),
+                (target.identity, '/foreign', {tool.LABEL: target.token}),
+                (target.identity, '/' + target.name, {tool.LABEL: 'foreign'})):
+            raw = '\n'.join(json.dumps(value) for value in (identity, name, labels)).encode()
+            with patch.object(integration, 'bounded_docker', return_value=(raw, 'ok')):
+                self.assertEqual(wal.owned(), identity == target.identity and
+                                 name == '/' + target.name and labels[tool.LABEL] == target.token)
+        wal.baseline = '0/10'
+        with patch.object(wal, 'owned', side_effect=[True, False]), \
+                patch.object(wal, 'position', return_value='0/20'), \
+                patch.object(wal, 'read_position', return_value='000000010000000000000001|000000010000000000000001'), \
+                patch.object(integration, 'bounded_docker') as run:
+            self.assertIn('ownership not verified', wal.report())
+            run.assert_not_called()
+
+    def record(self, position='0/10'):
+        return ('rmgr: Heap len (rec/tot): 24/24, tx: 1, lsn: ' + position +
+                ', prev 0/0, desc: INSERT malicious-password SELECT ::error::\n').encode()
+
+    def diagnostic_report(self, raw, status='ok'):
+        wal = integration.FixtureWAL(self.target())
+        wal.baseline = '0/10'
+        with patch.object(wal, 'owned', return_value=True), \
+                patch.object(wal, 'position', return_value='0/20'), \
+                patch.object(wal, 'read_position', return_value='000000010000000000000001|000000010000000000000001'), \
+                patch.object(integration, 'bounded_docker', return_value=(raw, status)):
+            return wal.report()
+
+    def test_selection_read_races_and_partial_nonzero_are_incomplete(self):
+        # Deterministic stand-ins for pg_waldump errors, not actual WAL recycling.
+        for error in (b'could not open file: No such file or directory',
+                      b'unexpected pageaddr 0/3000000 in WAL segment'):
+            for partial in (b'', self.record()):
+                report = self.diagnostic_report(partial + error + b' malicious-password SELECT ::error::',
+                                                'unavailable-or-active-eof')
+                self.assertIn('status=unavailable-or-active-eof', report)
+                self.assertIn('incomplete=true', report)
+                self.assertIn('truncated=false', report)
+                for payload in ('malicious-password', 'SELECT', '::error::', 'pageaddr', 'could not open'):
+                    self.assertNotIn(payload, report)
+
+    def test_zero_exit_malformed_out_of_range_duplicate_and_backwards_lsn(self):
+        for raw in (b'', b'malicious-password SELECT ::error::',
+                    b'rmgr: Heap len x desc: INSERT\n', self.record()[:-1]):
+            report = self.diagnostic_report(raw)
+            # A line without its final newline is not a completed decoded record.
+            self.assertIn('incomplete=true', report)
+            self.assertNotIn('status=ok', report)
+        for raw in (self.record('0/F'), self.record('0/20'), self.record('1/10'),
+                    self.record() * 2, self.record('0/18') + self.record(),
+                    self.record('0/20').replace(b'rmgr: Heap', b'rmgr: Unknown')):
+            report = self.diagnostic_report(raw)
+            self.assertIn('status=invalid-record-lsn', report)
+            self.assertIn('records=0', report)
+            self.assertIn('incomplete=true', report)
+            self.assertNotIn('Heap/INSERT', report)
+
+    def test_truncation_is_distinct_from_failed_read(self):
+        for status in ('timeout', 'byte-limit'):
+            report = self.diagnostic_report(self.record(), status)
+            self.assertIn('status=' + status, report)
+            self.assertIn('incomplete=true', report)
+            self.assertIn('truncated=' + str(status == 'byte-limit').lower(), report)
+        records = b''.join(self.record('0/' + format(value, 'X')) for value in range(16, 272))
+        counts, omitted, decoded, valid = integration.wal_summary(records, '0/10', '0/200')
+        self.assertEqual(decoded, integration.WAL_RECORD_LIMIT)
+        self.assertTrue(valid)
+        self.assertFalse(omitted)
+        wal = integration.FixtureWAL(self.target())
+        wal.baseline = '0/10'
+        with patch.object(wal, 'owned', return_value=True), \
+                patch.object(wal, 'position', return_value='0/200'), \
+                patch.object(wal, 'read_position', return_value='000000010000000000000001|000000010000000000000001'), \
+                patch.object(integration, 'bounded_docker', return_value=(records, 'ok')):
+            report = wal.report()
+        self.assertIn('truncated=true', report)
+        self.assertIn('incomplete=true', report)
+
+    def test_eof_wait_timeout_reaps_client_without_exposing_output(self):
+        process = Mock()
+        process.poll.return_value = None
+        process.wait.side_effect = [subprocess.TimeoutExpired('secret', 5), None]
+        selector = Mock()
+        selector.select.return_value = [(None, None)]
+        with patch.object(subprocess, 'Popen') as popen, \
+                patch.object(integration.selectors, 'DefaultSelector') as select, \
+                patch.object(integration.os, 'read', return_value=b''):
+            popen.return_value.__enter__.return_value = process
+            select.return_value.__enter__.return_value = selector
+            raw, status = integration.bounded_docker(['inspect', 'owned'])
+        self.assertEqual((raw, status), (b'', 'timeout'))
+        process.kill.assert_called_once()
+        self.assertEqual(process.wait.call_count, 2)
+
+    def test_capture_byte_cap_and_timeout_kill_process(self):
+        for timeout in (False, True):
+            process = Mock()
+            process.poll.return_value = None
+            selector = Mock()
+            selector.select.return_value = [] if timeout else [(None, None)]
+            with patch.object(subprocess, 'Popen') as popen, \
+                    patch.object(integration.selectors, 'DefaultSelector') as select, \
+                    patch.object(integration.os, 'read', return_value=b'x' * 4096):
+                popen.return_value.__enter__.return_value = process
+                select.return_value.__enter__.return_value = selector
+                raw, status = integration.bounded_docker(['exec', 'owned'])
+            self.assertEqual(status, 'timeout' if timeout else 'byte-limit')
+            self.assertLessEqual(len(raw), integration.WAL_BYTE_LIMIT)
+            process.kill.assert_called_once()
+            self.assertEqual(popen.call_args.kwargs['stderr'], subprocess.STDOUT)
+            self.assertEqual(popen.call_args.kwargs['stdin'], subprocess.DEVNULL)
 
 
 if __name__ == '__main__':
