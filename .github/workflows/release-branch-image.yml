@@ -4,6 +4,12 @@ on:
   push:
     branches:
       - release
+  workflow_dispatch:
+    inputs:
+      release_version:
+        description: Exact stable release version (vX.Y.Z)
+        required: true
+        type: string
 
 permissions:
   contents: read
@@ -11,6 +17,9 @@ permissions:
 jobs:
   version:
     name: Create version tag and GitHub Release
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      !contains(github.event.head_commit.message, '[skip release]')
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -25,19 +34,26 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
-      - name: Determine next patch version
+      - name: Determine stable version
         id: version
         shell: bash
+        env:
+          RELEASE_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.release_version || '' }}
         run: |
           set -euo pipefail
           previous_tag=$(git tag --list 'v[0-9]*.[0-9]*.[0-9]*' --sort=-version:refname | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | head -n 1 || true)
-          if [[ -z "$previous_tag" ]]; then
-            version=0.0.1
+          if [[ -n "$RELEASE_VERSION" ]]; then
+            [[ "$RELEASE_VERSION" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]] || {
+              echo "Invalid stable release version: $RELEASE_VERSION" >&2
+              exit 1
+            }
+            tag="$RELEASE_VERSION"
+          elif [[ -z "$previous_tag" ]]; then
+            tag=v0.0.1
           else
             IFS=. read -r major minor patch <<< "${previous_tag#v}"
-            version="${major}.${minor}.$((patch + 1))"
+            tag="v${major}.${minor}.$((patch + 1))"
           fi
-          tag="v${version}"
           if git rev-parse -q --verify "refs/tags/$tag" >/dev/null; then
             echo "Version tag already exists: $tag" >&2
             exit 1
