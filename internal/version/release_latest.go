@@ -14,15 +14,15 @@ import (
 )
 
 const (
-	githubLatestReleaseURL      = "https://github.com/caidaoli/ccLoad/releases/latest"
-	githubReleasesFeedURL       = "https://github.com/caidaoli/ccLoad/releases.atom"
-	githubDownloadBaseURL       = "https://github.com/caidaoli/ccLoad/releases/download"
-	monlorLatestReleaseURL      = "https://gh.monlor.com/https://github.com/caidaoli/ccLoad/releases/latest"
-	monlorDownloadBaseURL       = "https://gh.monlor.com/https://github.com/caidaoli/ccLoad/releases/download"
-	fastgitLatestReleaseURL     = "https://fastgit.cc/https://github.com/caidaoli/ccLoad/releases/latest"
-	fastgitDownloadBaseURL      = "https://fastgit.cc/https://github.com/caidaoli/ccLoad/releases/download"
-	ghfastLatestReleaseURL      = "https://ghfast.top/https://github.com/caidaoli/ccLoad/releases/latest"
-	ghfastDownloadBaseURL       = "https://ghfast.top/https://github.com/caidaoli/ccLoad/releases/download"
+	githubLatestReleaseURL      = "https://github.com/prawee/mittr-load/releases/latest"
+	githubReleasesFeedURL       = "https://github.com/prawee/mittr-load/releases.atom"
+	githubDownloadBaseURL       = "https://github.com/prawee/mittr-load/releases/download"
+	monlorLatestReleaseURL      = "https://gh.monlor.com/https://github.com/prawee/mittr-load/releases/latest"
+	monlorDownloadBaseURL       = "https://gh.monlor.com/https://github.com/prawee/mittr-load/releases/download"
+	fastgitLatestReleaseURL     = "https://fastgit.cc/https://github.com/prawee/mittr-load/releases/latest"
+	fastgitDownloadBaseURL      = "https://fastgit.cc/https://github.com/prawee/mittr-load/releases/download"
+	ghfastLatestReleaseURL      = "https://ghfast.top/https://github.com/prawee/mittr-load/releases/latest"
+	ghfastDownloadBaseURL       = "https://ghfast.top/https://github.com/prawee/mittr-load/releases/download"
 	releaseLatestDownloadSuffix = "/releases/latest/download"
 	releaseTagPathMarker        = "/releases/tag/"
 	releaseListMaxBodyBytes     = 2 << 20

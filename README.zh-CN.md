@@ -4,10 +4,10 @@
 
 **[English](README.md) | 简体中文** · [官网](https://ccload.xyz/zh/)
 
-[![Release](https://img.shields.io/github/v/release/caidaoli/ccLoad)](https://github.com/caidaoli/ccLoad/releases/latest)
-[![Test](https://github.com/caidaoli/ccLoad/actions/workflows/test.yml/badge.svg)](https://github.com/caidaoli/ccLoad/actions/workflows/test.yml)
-[![Go](https://img.shields.io/github/go-mod/go-version/caidaoli/ccLoad)](go.mod)
-[![License](https://img.shields.io/github/license/caidaoli/ccLoad)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/prawee/mittr-load)](https://github.com/prawee/mittr-load/releases/latest)
+[![Test](https://github.com/prawee/mittr-load/actions/workflows/test.yml/badge.svg)](https://github.com/prawee/mittr-load/actions/workflows/test.yml)
+[![Go](https://img.shields.io/github/go-mod/go-version/prawee/mittr-load)](go.mod)
+[![License](https://img.shields.io/github/license/prawee/mittr-load)](LICENSE)
 
 [![观看 47 秒 ccLoad 介绍视频](images/ccload-promo.zh-CN.jpg)](https://ccload.xyz/assets/video/ccload-promo.zh-CN.mp4?v=20261002)
 
@@ -56,7 +56,7 @@ docker run -d --name ccload \
   -p 8080:8080 \
   -e CCLOAD_PASS=换成你的管理密码 \
   -v ccload_data:/app/data \
-  ghcr.io/caidaoli/ccload:latest
+  ghcr.io/prawee/mittr-load:latest
 ```
 
 数据保存在 Docker 卷 `ccload_data` 里，删除或升级容器都不会丢失。
@@ -64,8 +64,8 @@ docker run -d --name ccload \
 **Docker Compose**：
 
 ```bash
-curl -o docker-compose.yml https://raw.githubusercontent.com/caidaoli/ccLoad/master/docker-compose.yml
-curl -o .env https://raw.githubusercontent.com/caidaoli/ccLoad/master/.env.docker.example
+curl -o docker-compose.yml https://raw.githubusercontent.com/prawee/mittr-load/master/docker-compose.yml
+curl -o .env https://raw.githubusercontent.com/prawee/mittr-load/master/.env.docker.example
 # 编辑 .env，把 CCLOAD_PASS 改成你的管理密码
 docker compose up -d
 ```
@@ -73,7 +73,7 @@ docker compose up -d
 **Homebrew（macOS / Linux）**：
 
 ```bash
-brew tap caidaoli/ccload https://github.com/caidaoli/ccLoad.git
+brew tap caidaoli/ccload https://github.com/prawee/mittr-load.git
 brew install caidaoli/ccload/ccload
 
 # 在配置目录创建 .env，写入一行：CCLOAD_PASS=你的管理密码
@@ -85,7 +85,7 @@ ${EDITOR:-vi} .env
 brew services start caidaoli/ccload/ccload
 ```
 
-**直接下载程序**：从 [Releases](https://github.com/caidaoli/ccLoad/releases/latest) 下载对应平台的文件（`ccload-linux-amd64`、`ccload-linux-arm64`、`ccload-darwin-arm64`、`ccload-darwin-amd64`、`ccload-windows-amd64.exe`），以 Linux 为例：
+**直接下载程序**：从 [Releases](https://github.com/prawee/mittr-load/releases/latest) 下载对应平台的文件（`ccload-linux-amd64`、`ccload-linux-arm64`、`ccload-darwin-arm64`、`ccload-darwin-amd64`、`ccload-windows-amd64.exe`），以 Linux 为例：
 
 ```bash
 chmod +x ccload-linux-amd64
@@ -300,7 +300,7 @@ curl -X POST http://localhost:8080/v1/messages \
 
 ## 贡献
 
-欢迎提交 Issue 和 PR：https://github.com/caidaoli/ccLoad/issues
+欢迎提交 Issue 和 PR：https://github.com/prawee/mittr-load/issues
 
 Go 命令必须带 `sonic` 构建标签。提交改动前，按影响范围运行对应验证：
 

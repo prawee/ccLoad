@@ -38,7 +38,7 @@ Tag 形状为 `vX.Y.Z`，workflow 将同一镜像发布为 `release`、version t
 
 ## 安全规则
 
-- 仅 push `release`；不 push `master`，不创建 tag 手动触发 `.github/workflows/release.yml`，不使用该 skill 的旧 `scripts/release.sh`（该脚本强制 `master` 与 `caidaoli/ccLoad`，不适用于 release-branch 流程）。
+- 仅 push `release`；不 push `master`，不创建 tag 手动触发 `.github/workflows/release.yml`，不使用该 skill 的旧 `scripts/release.sh`（该脚本强制 `master` 与旧仓库名，不适用于 release-branch 流程）。
 - 不 force push、不自动 rebase/merge、不删除或改写 tag、Release、image。任何失败都保留现场并报告，不自动回滚。
 - 此流程只创建 stable version，不适用于 Beta/prerelease。不要把 `beta` 或 `latest` Git tag 假装成发布版本。
 - Release branch workflow 当前使用 `GITHUB_TOKEN`。Push 生成的 version tag 不会触发其他 workflow；该 release branch workflow 本身需要成功完成 GitHub Release 与 GHCR 发布。

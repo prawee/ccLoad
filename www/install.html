@@ -110,8 +110,8 @@
               <button class="www-code-copy" data-i18n="www.common.copy">Copy</button>
             </div>
             <div class="www-code-content">
-              <pre><code>curl -o docker-compose.yml https://raw.githubusercontent.com/caidaoli/ccLoad/master/docker-compose.yml
-curl -o .env https://raw.githubusercontent.com/caidaoli/ccLoad/master/.env.docker.example
+              <pre><code>curl -o docker-compose.yml https://raw.githubusercontent.com/prawee/mittr-load/master/docker-compose.yml
+curl -o .env https://raw.githubusercontent.com/prawee/mittr-load/master/.env.docker.example
 
 <span data-i18n-html="www.install.docker.code.password"># Required: set the admin console password</span>
 nano .env
@@ -170,7 +170,7 @@ docker-compose logs -f ccload</code></pre>
           </div>
 
           <div class="www-callout" data-i18n-html="www.install.docker.note.image">
-            <strong>The official GHCR image uses a Debian/glibc runtime for the Cursor SDK Bridge companion.</strong> Stable releases publish an exact version Tag plus <code>latest</code>; Beta releases publish an exact prerelease Tag plus <code>beta</code>. Containers do not update in process. Set the Compose image Tag, then run <code>docker compose pull &amp;&amp; docker compose up -d</code>. Pin a release with <code>ghcr.io/caidaoli/ccload:v4.9.0</code>.
+            <strong>The official GHCR image uses a Debian/glibc runtime for the Cursor SDK Bridge companion.</strong> Stable releases publish an exact version Tag plus <code>latest</code>; Beta releases publish an exact prerelease Tag plus <code>beta</code>. Containers do not update in process. Set the Compose image Tag, then run <code>docker compose pull &amp;&amp; docker compose up -d</code>. Pin a release with <code>ghcr.io/prawee/mittr-load:v4.9.0</code>.
           </div>
 
           <a class="www-verify-banner" href="#verify">
@@ -214,7 +214,7 @@ docker-compose logs -f ccload</code></pre>
             <h3 data-i18n-html="www.install.hf.settings.title">Space settings</h3>
             <ul class="www-check-list">
               <li data-i18n-html="www.install.hf.settings.item1">Create a Space and choose Docker as the SDK.</li>
-              <li data-i18n-html="www.install.hf.settings.item2">Use <code>ghcr.io/caidaoli/ccload:latest</code> in <code>Dockerfile</code>.</li>
+              <li data-i18n-html="www.install.hf.settings.item2">Use <code>ghcr.io/prawee/mittr-load:latest</code> in <code>Dockerfile</code>.</li>
               <li data-i18n-html="www.install.hf.settings.item3">Add <code>CCLOAD_PASS</code> in Secrets; do not put it in public files.</li>
               <li data-i18n-html="www.install.hf.settings.item4">Create an API access token in the admin console before production access.</li>
             </ul>
@@ -237,14 +237,14 @@ docker-compose logs -f ccload</code></pre>
             <button class="www-code-copy" data-i18n="www.common.copy">Copy</button>
           </div>
           <div class="www-code-content">
-            <pre><code>FROM ghcr.io/caidaoli/ccload:latest
+            <pre><code>FROM ghcr.io/prawee/mittr-load:latest
 
 ENV PORT=7860
 ENV SQLITE_PATH=/tmp/ccload.db
 EXPOSE 7860
 
 <span data-i18n-html="www.install.hf.code.pin"># Pin a stable release instead of latest:</span>
-# FROM ghcr.io/caidaoli/ccload:v4.9.0</code></pre>
+# FROM ghcr.io/prawee/mittr-load:v4.9.0</code></pre>
           </div>
         </div>
       </div>
@@ -262,7 +262,7 @@ EXPOSE 7860
             <span class="www-code-lang">bash</span>
             <button class="www-code-copy" data-i18n="www.common.copy">Copy</button>
           </div>
-          <div class="www-code-content"><pre><code>brew tap caidaoli/ccload https://github.com/caidaoli/ccLoad.git
+          <div class="www-code-content"><pre><code>brew tap caidaoli/ccload https://github.com/prawee/mittr-load.git
 brew install caidaoli/ccload/ccload
 
 mkdir -p "$(brew --prefix)/var/ccload"
@@ -308,7 +308,7 @@ brew services stop caidaoli/ccload/ccload</code></pre></div>
                 <button class="www-code-copy" data-i18n="www.common.copy">Copy</button>
               </div>
               <div class="www-code-content">
-                <pre><code>git clone https://github.com/caidaoli/ccLoad.git
+                <pre><code>git clone https://github.com/prawee/mittr-load.git
 cd ccLoad
 
 export CCLOAD_PASS=your_admin_password
@@ -328,7 +328,7 @@ make build
                 <button class="www-code-copy" data-i18n="www.common.copy">Copy</button>
               </div>
               <div class="www-code-content">
-                <pre><code>wget https://github.com/caidaoli/ccLoad/releases/latest/download/ccload-linux-amd64
+                <pre><code>wget https://github.com/prawee/mittr-load/releases/latest/download/ccload-linux-amd64
 chmod +x ccload-linux-amd64
 
 <span data-i18n-html="www.install.source.code.bridge"># Cursor SDK Bridge is installed automatically when a Cursor channel exists.

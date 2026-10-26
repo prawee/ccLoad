@@ -18,18 +18,18 @@
 **使用预构建镜像（推荐）**：
 ```bash
 # 方式 1: 使用 Docker Compose（最简单）
-curl -o docker-compose.yml https://raw.githubusercontent.com/caidaoli/ccLoad/master/docker-compose.yml
-curl -o .env https://raw.githubusercontent.com/caidaoli/ccLoad/master/.env.docker.example
+curl -o docker-compose.yml https://raw.githubusercontent.com/prawee/mittr-load/master/docker-compose.yml
+curl -o .env https://raw.githubusercontent.com/prawee/mittr-load/master/.env.docker.example
 # 编辑 .env 文件设置 CCLOAD_PASS（必填，未设置服务会拒绝启动）
 docker compose up -d
 
 # 方式 2: 直接运行镜像
-docker pull ghcr.io/caidaoli/ccload:latest
+docker pull ghcr.io/prawee/mittr-load:latest
 docker run -d --name ccload \
   -p 8080:8080 \
   -e CCLOAD_PASS=your_secure_password \
   -v ccload_data:/app/data \
-  ghcr.io/caidaoli/ccload:latest
+  ghcr.io/prawee/mittr-load:latest
 ```
 
 **从源码构建**：
@@ -37,7 +37,7 @@ docker run -d --name ccload \
 需要审计镜像内容或定制构建时，可从源码构建：
 ```bash
 # 克隆项目
-git clone https://github.com/caidaoli/ccLoad.git
+git clone https://github.com/prawee/mittr-load.git
 cd ccLoad
 
 # 使用 Docker Compose 构建并运行
@@ -59,7 +59,7 @@ docker run -d --name ccload \
 
 ```bash
 # 克隆项目
-git clone https://github.com/caidaoli/ccLoad.git
+git clone https://github.com/prawee/mittr-load.git
 cd ccLoad
 
 # 构建项目（默认使用高性能 JSON 库）
@@ -80,7 +80,7 @@ make dev
 
 ```bash
 # 从 GitHub Releases 下载对应平台的二进制文件
-wget https://github.com/caidaoli/ccLoad/releases/latest/download/ccload-linux-amd64
+wget https://github.com/prawee/mittr-load/releases/latest/download/ccload-linux-amd64
 chmod +x ccload-linux-amd64
 ./ccload-linux-amd64
 ```
@@ -92,7 +92,7 @@ chmod +x ccload-linux-amd64
 项目仓库同时作为 [Homebrew tap](https://docs.brew.sh/How-to-Create-and-Maintain-a-Tap)，安装经过 SHA-256 校验的 Release 二进制，支持 macOS/Linux 的 ARM64、AMD64，无需 Go 编译器。Formula 仅跟随稳定版。
 
 ```bash
-brew tap caidaoli/ccload https://github.com/caidaoli/ccLoad.git
+brew tap caidaoli/ccload https://github.com/prawee/mittr-load.git
 brew install caidaoli/ccload/ccload
 
 # 创建或编辑此文件，将 CCLOAD_PASS 设置为强密码。
@@ -146,7 +146,7 @@ Hugging Face Spaces 提供免费的 Docker 托管和自动 HTTPS，适合个人�
    在 Space 仓库中创建 `Dockerfile` 文件，内容如下：
 
    ```dockerfile
-   FROM ghcr.io/caidaoli/ccload:latest
+   FROM ghcr.io/prawee/mittr-load:latest
    ENV TZ=Asia/Shanghai
    ENV PORT=7860
    ENV SQLITE_PATH=/tmp/ccload.db
@@ -274,7 +274,7 @@ CCLOAD_POSTGRES=postgres://user:password@host:5432/ccload?sslmode=require
 由于使用预构建镜像，更新非常简单：
 
 **镜像更新**:
-- 当官方发布新版本镜像（`ghcr.io/caidaoli/ccload:latest`）时
+- 当官方发布新版本镜像（`ghcr.io/prawee/mittr-load:latest`）时
 - 在 Space 设置中点击 "Factory rebuild" 即可自动拉取最新镜像
 - 或等待 Hugging Face 自动重启（通常 48 小时后）
 
@@ -288,7 +288,7 @@ git push
 **版本锁定**（可选）:
 如果需要锁定特定版本，把 Dockerfile 的 `FROM` 行改为精确版本 Tag：
 ```dockerfile
-FROM ghcr.io/caidaoli/ccload:v4.10.2
+FROM ghcr.io/prawee/mittr-load:v4.10.2
 ```
 
 ## 基本配置
@@ -368,7 +368,7 @@ services:
       retries: 5
 
   ccload:
-    image: ghcr.io/caidaoli/ccload:latest
+    image: ghcr.io/prawee/mittr-load:latest
     environment:
       CCLOAD_PASS: your_admin_password
       CCLOAD_MYSQL: "ccload:ccloadpass@tcp(mysql:3306)/ccload?charset=utf8mb4"
@@ -390,7 +390,7 @@ docker run -d --name ccload \
   -p 8080:8080 \
   -e CCLOAD_PASS=your_admin_password \
   -e CCLOAD_MYSQL="user:pass@tcp(mysql_host:3306)/ccload?charset=utf8mb4" \
-  ghcr.io/caidaoli/ccload:latest
+  ghcr.io/prawee/mittr-load:latest
 ```
 
 **Docker + PostgreSQL**（需要已有 PostgreSQL 服务）:
@@ -399,7 +399,7 @@ docker run -d --name ccload \
   -p 8080:8080 \
   -e CCLOAD_PASS=your_admin_password \
   -e CCLOAD_POSTGRES="postgres://user:pass@postgres_host:5432/ccload?sslmode=require" \
-  ghcr.io/caidaoli/ccload:latest
+  ghcr.io/prawee/mittr-load:latest
 ```
 
 服务启动后访问：
@@ -412,7 +412,7 @@ docker run -d --name ccload \
 官方镜像支持多架构：
 
 - **支持架构**：`linux/amd64`, `linux/arm64`
-- **镜像仓库**：`ghcr.io/caidaoli/ccload`
+- **镜像仓库**：`ghcr.io/prawee/mittr-load`
 - **可用标签**：
   - `latest` - 最新稳定版本
   - `beta` - 最新 Beta 版本
@@ -425,21 +425,21 @@ docker run -d --name ccload \
 
 ```bash
 # 拉取最新版本
-docker pull ghcr.io/caidaoli/ccload:latest
+docker pull ghcr.io/prawee/mittr-load:latest
 
 # 拉取指定版本
-docker pull ghcr.io/caidaoli/ccload:v4.10.2
+docker pull ghcr.io/prawee/mittr-load:v4.10.2
 
 # 拉取最新 Beta；要锁定版本时将 beta 替换为已发布的 vX.Y.Z-beta.N Tag
-docker pull ghcr.io/caidaoli/ccload:beta
+docker pull ghcr.io/prawee/mittr-load:beta
 
 # 使用 Compose 时，将 image 改为 :latest 或 :beta 后应用变更
 docker compose pull
 docker compose up -d
 
 # 指定架构（Docker 通常自动选择）
-docker pull --platform linux/amd64 ghcr.io/caidaoli/ccload:latest
-docker pull --platform linux/arm64 ghcr.io/caidaoli/ccload:latest
+docker pull --platform linux/amd64 ghcr.io/prawee/mittr-load:latest
+docker pull --platform linux/arm64 ghcr.io/prawee/mittr-load:latest
 ```
 
 ## 自动更新
@@ -450,7 +450,7 @@ docker pull --platform linux/arm64 ghcr.io/caidaoli/ccload:latest
 
 官方容器不运行版本检查或进程内更新循环。每个稳定版和 Beta 镜像都直接包含对应 GitHub Release 生成的同版本二进制。稳定版发布精确版本 Tag 和 `latest`，Beta 发布精确测试版 Tag 和滚动 `beta` 别名。修改 Compose 中的镜像标签后，重新拉取并启动容器即可切换版本。
 
-如需使用私有发布镜像，可将 `CCLOAD_RELEASE_BASE_URL` 设置为完整的 latest-download 地址，例如 `https://mirror.example/caidaoli/ccLoad/releases/latest/download`。显式设置后，稳定版元数据和全部发布文件下载都不会追加内置回退源；测试版元数据仍从 GitHub Releases Atom feed 获取。该变量不会设置 `HTTP_PROXY` 或 `HTTPS_PROXY`，因此不会让业务渠道请求经过下载代理。
+如需使用私有发布镜像，可将 `CCLOAD_RELEASE_BASE_URL` 设置为完整的 latest-download 地址，例如 `https://mirror.example/prawee/mittr-load/releases/latest/download`。显式设置后，稳定版元数据和全部发布文件下载都不会追加内置回退源；测试版元数据仍从 GitHub Releases Atom feed 获取。该变量不会设置 `HTTP_PROXY` 或 `HTTPS_PROXY`，因此不会让业务渠道请求经过下载代理。
 
 ## 🔄 CI/CD
 

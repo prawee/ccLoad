@@ -16,24 +16,24 @@ Choose the deployment method that suits you best:
 **Using pre-built images (Recommended)**:
 ```bash
 # Option 1: Using Docker Compose (Simplest)
-curl -o docker-compose.yml https://raw.githubusercontent.com/caidaoli/ccLoad/master/docker-compose.yml
-curl -o .env https://raw.githubusercontent.com/caidaoli/ccLoad/master/.env.docker.example
+curl -o docker-compose.yml https://raw.githubusercontent.com/prawee/mittr-load/master/docker-compose.yml
+curl -o .env https://raw.githubusercontent.com/prawee/mittr-load/master/.env.docker.example
 # Edit .env file to set CCLOAD_PASS (required, service exits without it)
 docker compose up -d
 
 # Option 2: Run image directly
-docker pull ghcr.io/caidaoli/ccload:latest
+docker pull ghcr.io/prawee/mittr-load:latest
 docker run -d --name ccload \
   -p 8080:8080 \
   -e CCLOAD_PASS=your_secure_password \
   -v ccload_data:/app/data \
-  ghcr.io/caidaoli/ccload:latest
+  ghcr.io/prawee/mittr-load:latest
 ```
 
 **Building from source**:
 ```bash
 # Clone project
-git clone https://github.com/caidaoli/ccLoad.git
+git clone https://github.com/prawee/mittr-load.git
 cd ccLoad
 
 # Build and run with Docker Compose
@@ -53,7 +53,7 @@ docker run -d --name ccload \
 
 ```bash
 # Clone project
-git clone https://github.com/caidaoli/ccLoad.git
+git clone https://github.com/prawee/mittr-load.git
 cd ccLoad
 
 # Build project (uses high-performance JSON library by default)
@@ -72,7 +72,7 @@ make dev
 
 ```bash
 # Download binary for your platform from GitHub Releases
-wget https://github.com/caidaoli/ccLoad/releases/latest/download/ccload-linux-amd64
+wget https://github.com/prawee/mittr-load/releases/latest/download/ccload-linux-amd64
 chmod +x ccload-linux-amd64
 ./ccload-linux-amd64
 ```
@@ -84,7 +84,7 @@ When a Cursor channel exists, ccLoad automatically downloads its pinned SDK Brid
 The project repository doubles as a [Homebrew tap](https://docs.brew.sh/How-to-Create-and-Maintain-a-Tap). It installs verified release binaries for macOS and Linux on ARM64 or AMD64; no Go compiler is required. The formula tracks stable releases only.
 
 ```bash
-brew tap caidaoli/ccload https://github.com/caidaoli/ccLoad.git
+brew tap caidaoli/ccload https://github.com/prawee/mittr-load.git
 brew install caidaoli/ccload/ccload
 
 # Create/edit this file and set CCLOAD_PASS to a strong password.
@@ -138,7 +138,7 @@ Hugging Face Spaces provides free container hosting with Docker support, ideal f
    Create a `Dockerfile` in the Space repository:
 
    ```dockerfile
-   FROM ghcr.io/caidaoli/ccload:latest
+   FROM ghcr.io/prawee/mittr-load:latest
    ENV TZ=Asia/Shanghai
    ENV PORT=7860
    ENV SQLITE_PATH=/tmp/ccload.db
@@ -263,7 +263,7 @@ URL and libpq keyword DSNs are supported. Do not set `CCLOAD_MYSQL` and `CCLOAD_
 With pre-built images, updates are simple:
 
 **Image Refresh**:
-- When new version image (`ghcr.io/caidaoli/ccload:latest`) is released
+- When new version image (`ghcr.io/prawee/mittr-load:latest`) is released
 - Click "Factory rebuild" in Space settings to pull latest image
 - Or wait for Hugging Face auto-restart (typically after 48 hours)
 
@@ -277,7 +277,7 @@ git push
 **Version Pinning** (Optional):
 To lock a specific version, change the `FROM` line of the Dockerfile to an exact version Tag:
 ```dockerfile
-FROM ghcr.io/caidaoli/ccload:v4.10.2
+FROM ghcr.io/prawee/mittr-load:v4.10.2
 ```
 
 ## Basic Configuration
@@ -355,7 +355,7 @@ services:
       retries: 5
 
   ccload:
-    image: ghcr.io/caidaoli/ccload:latest
+    image: ghcr.io/prawee/mittr-load:latest
     environment:
       CCLOAD_PASS: your_admin_password
       CCLOAD_MYSQL: "ccload:ccloadpass@tcp(mysql:3306)/ccload?charset=utf8mb4"
@@ -377,7 +377,7 @@ docker run -d --name ccload \
   -p 8080:8080 \
   -e CCLOAD_PASS=your_admin_password \
   -e CCLOAD_MYSQL="user:pass@tcp(mysql_host:3306)/ccload?charset=utf8mb4" \
-  ghcr.io/caidaoli/ccload:latest
+  ghcr.io/prawee/mittr-load:latest
 ```
 
 **Docker + PostgreSQL** (requires an existing PostgreSQL service):
@@ -386,7 +386,7 @@ docker run -d --name ccload \
   -p 8080:8080 \
   -e CCLOAD_PASS=your_admin_password \
   -e CCLOAD_POSTGRES="postgres://user:pass@postgres_host:5432/ccload?sslmode=require" \
-  ghcr.io/caidaoli/ccload:latest
+  ghcr.io/prawee/mittr-load:latest
 ```
 
 After service starts, access:
@@ -399,7 +399,7 @@ After service starts, access:
 Project supports multi-arch Docker images:
 
 - **Supported Architectures**: `linux/amd64`, `linux/arm64`
-- **Image Registry**: `ghcr.io/caidaoli/ccload`
+- **Image Registry**: `ghcr.io/prawee/mittr-load`
 - **Available Tags**:
   - `latest` - Latest stable version
   - `beta` - Latest Beta version
@@ -412,21 +412,21 @@ The official GHCR runtime image is Debian/glibc-based and immutable because the 
 
 ```bash
 # Pull latest version
-docker pull ghcr.io/caidaoli/ccload:latest
+docker pull ghcr.io/prawee/mittr-load:latest
 
 # Pull specific version
-docker pull ghcr.io/caidaoli/ccload:v4.10.2
+docker pull ghcr.io/prawee/mittr-load:v4.10.2
 
 # Pull latest Beta; replace beta with a published vX.Y.Z-beta.N Tag to pin it
-docker pull ghcr.io/caidaoli/ccload:beta
+docker pull ghcr.io/prawee/mittr-load:beta
 
 # With Compose, set image to :latest or :beta, then apply the change
 docker compose pull
 docker compose up -d
 
 # Specify architecture (Docker usually auto-selects)
-docker pull --platform linux/amd64 ghcr.io/caidaoli/ccload:latest
-docker pull --platform linux/arm64 ghcr.io/caidaoli/ccload:latest
+docker pull --platform linux/amd64 ghcr.io/prawee/mittr-load:latest
+docker pull --platform linux/arm64 ghcr.io/prawee/mittr-load:latest
 ```
 
 ## Auto Updates
@@ -437,7 +437,7 @@ Stable metadata is resolved through the configured release sources. Preview disc
 
 Official containers do not run the release check or in-process update loop. Every stable and Beta image contains the exact binary produced by the matching GitHub Release. Stable releases publish an exact version Tag plus `latest`; Beta releases publish an exact prerelease Tag plus the rolling `beta` alias. Switch the image Tag in Compose, then pull and recreate the container.
 
-To use a private release mirror, set `CCLOAD_RELEASE_BASE_URL` to a complete latest-download base such as `https://mirror.example/caidaoli/ccLoad/releases/latest/download`. An explicit value disables built-in fallback sources for stable metadata and all asset downloads. Preview metadata still comes from GitHub's Releases Atom feed. This setting does not configure `HTTP_PROXY` or `HTTPS_PROXY` for upstream API traffic.
+To use a private release mirror, set `CCLOAD_RELEASE_BASE_URL` to a complete latest-download base such as `https://mirror.example/prawee/mittr-load/releases/latest/download`. An explicit value disables built-in fallback sources for stable metadata and all asset downloads. Preview metadata still comes from GitHub's Releases Atom feed. This setting does not configure `HTTP_PROXY` or `HTTPS_PROXY` for upstream API traffic.
 
 ## 🔄 CI/CD
 

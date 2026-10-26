@@ -4,10 +4,10 @@
 
 **English | [简体中文](README.zh-CN.md)** · [Website](https://ccload.xyz)
 
-[![Release](https://img.shields.io/github/v/release/caidaoli/ccLoad)](https://github.com/caidaoli/ccLoad/releases/latest)
-[![Test](https://github.com/caidaoli/ccLoad/actions/workflows/test.yml/badge.svg)](https://github.com/caidaoli/ccLoad/actions/workflows/test.yml)
-[![Go](https://img.shields.io/github/go-mod/go-version/caidaoli/ccLoad)](go.mod)
-[![License](https://img.shields.io/github/license/caidaoli/ccLoad)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/prawee/mittr-load)](https://github.com/prawee/mittr-load/releases/latest)
+[![Test](https://github.com/prawee/mittr-load/actions/workflows/test.yml/badge.svg)](https://github.com/prawee/mittr-load/actions/workflows/test.yml)
+[![Go](https://img.shields.io/github/go-mod/go-version/prawee/mittr-load)](go.mod)
+[![License](https://img.shields.io/github/license/prawee/mittr-load)](LICENSE)
 
 [![Watch the 47-second ccLoad overview](images/ccload-promo.en.jpg)](https://ccload.xyz/assets/video/ccload-promo.en.mp4?v=20261002)
 
@@ -56,7 +56,7 @@ docker run -d --name ccload \
   -p 8080:8080 \
   -e CCLOAD_PASS=your_admin_password \
   -v ccload_data:/app/data \
-  ghcr.io/caidaoli/ccload:latest
+  ghcr.io/prawee/mittr-load:latest
 ```
 
 Data lives in the Docker volume `ccload_data`, so removing or upgrading the container keeps it.
@@ -64,8 +64,8 @@ Data lives in the Docker volume `ccload_data`, so removing or upgrading the cont
 **Docker Compose**:
 
 ```bash
-curl -o docker-compose.yml https://raw.githubusercontent.com/caidaoli/ccLoad/master/docker-compose.yml
-curl -o .env https://raw.githubusercontent.com/caidaoli/ccLoad/master/.env.docker.example
+curl -o docker-compose.yml https://raw.githubusercontent.com/prawee/mittr-load/master/docker-compose.yml
+curl -o .env https://raw.githubusercontent.com/prawee/mittr-load/master/.env.docker.example
 # Edit .env and set CCLOAD_PASS to your admin password
 docker compose up -d
 ```
@@ -73,7 +73,7 @@ docker compose up -d
 **Homebrew (macOS / Linux)**:
 
 ```bash
-brew tap caidaoli/ccload https://github.com/caidaoli/ccLoad.git
+brew tap caidaoli/ccload https://github.com/prawee/mittr-load.git
 brew install caidaoli/ccload/ccload
 
 # Create .env in the config directory with one line: CCLOAD_PASS=your_admin_password
@@ -85,7 +85,7 @@ ${EDITOR:-vi} .env
 brew services start caidaoli/ccload/ccload
 ```
 
-**Download the binary**: get the file for your platform from [Releases](https://github.com/caidaoli/ccLoad/releases/latest) (`ccload-linux-amd64`, `ccload-linux-arm64`, `ccload-darwin-arm64`, `ccload-darwin-amd64`, `ccload-windows-amd64.exe`). On Linux:
+**Download the binary**: get the file for your platform from [Releases](https://github.com/prawee/mittr-load/releases/latest) (`ccload-linux-amd64`, `ccload-linux-arm64`, `ccload-darwin-arm64`, `ccload-darwin-amd64`, `ccload-windows-amd64.exe`). On Linux:
 
 ```bash
 chmod +x ccload-linux-amd64
@@ -300,7 +300,7 @@ The website has the same topics as guided pages: [Install](https://ccload.xyz/in
 
 ## Contributing
 
-Issues and pull requests are welcome: https://github.com/caidaoli/ccLoad/issues
+Issues and pull requests are welcome: https://github.com/prawee/mittr-load/issues
 
 Go commands need the `sonic` build tag. Before sending a change, run the checks that match the touched area:
 

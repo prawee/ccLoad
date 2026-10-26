@@ -38,7 +38,7 @@ func TestStartUpdateManagerContainerSkipsReleaseChecks(t *testing.T) {
 	t.Cleanup(releaseServer.Close)
 
 	t.Setenv("CCLOAD_CONTAINER", "1")
-	t.Setenv("CCLOAD_RELEASE_BASE_URL", releaseServer.URL+"/caidaoli/ccLoad/releases/latest/download")
+	t.Setenv("CCLOAD_RELEASE_BASE_URL", releaseServer.URL+"/prawee/mittr-load/releases/latest/download")
 
 	var restartCalls atomic.Int64
 	ctx, cancel := context.WithCancel(context.Background())
@@ -74,7 +74,7 @@ func TestStartUpdateManagerDisabledMakesNoReleaseRequest(t *testing.T) {
 	}))
 	t.Cleanup(releaseServer.Close)
 
-	t.Setenv("CCLOAD_RELEASE_BASE_URL", releaseServer.URL+"/caidaoli/ccLoad/releases/latest/download")
+	t.Setenv("CCLOAD_RELEASE_BASE_URL", releaseServer.URL+"/prawee/mittr-load/releases/latest/download")
 	server := &Server{
 		configService: newStubConfigService(map[string]string{
 			"auto_update_interval_hours": "0",
@@ -100,8 +100,8 @@ func TestHandleManualUpdateRunsFullUpdate(t *testing.T) {
 	releaseServer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/latest":
-			http.Redirect(w, r, "/caidaoli/ccLoad/releases/tag/v1.1.0", http.StatusFound)
-		case "/caidaoli/ccLoad/releases/tag/v1.1.0":
+			http.Redirect(w, r, "/prawee/mittr-load/releases/tag/v1.1.0", http.StatusFound)
+		case "/prawee/mittr-load/releases/tag/v1.1.0":
 			_, _ = fmt.Fprint(w, "<html></html>")
 		case "/download/v1.1.0/checksums.txt":
 			sum := sha256.Sum256(application)

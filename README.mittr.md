@@ -7,7 +7,7 @@
 | ไฟล์ | หน้าที่ |
 | --- | --- |
 | `README.mittr.md` | คู่มือฉบับนี้ |
-| `docker-compose.mittr.yml` | รัน local image `mittr-load:1.0.0` |
+| `docker-compose.mittr.yml` | รัน release image `ghcr.io/prawee/mittr-load:v0.0.5` |
 | `.env.mittr.example` | ตัวอย่าง env ที่คัดลอกจาก `.env.example` โดยคงเนื้อหาเดิม |
 | `docker-compose.mittr-postgres.yml` | PostgreSQL แบบ optional แยก project จาก app |
 | `.env.mittr-postgres.example` | ตัวอย่าง env สำหรับ PostgreSQL เท่านั้น |
@@ -41,35 +41,19 @@ git check-ignore .env.mittr.local
 
 ไม่ต้องแก้ `.env` หรือ `.env.docker` ของ deployment อื่น และไม่ควรเก็บ secret ไว้ใน `.env.mittr.example`
 
-## 2. Build image
+## 2. ใช้ release image
 
-ใช้ Dockerfile ของ upstream โดยไม่ต้องทำสำเนา Dockerfile:
+Compose จะดึง multi-platform release image `ghcr.io/prawee/mittr-load:v0.0.5` จาก GHCR ให้อัตโนมัติ ไม่ต้อง build image ในเครื่องก่อน หากต้องการ build source ที่ checkout อยู่เพื่อทดสอบ ให้ใช้:
 
 ```bash
 docker build \
-  --build-arg VERSION=1.0.0 \
+  --build-arg VERSION=dev \
   --build-arg COMMIT="$(git rev-parse HEAD)" \
-  --tag mittr-load:1.0.0 \
+  --tag mittr-load:local \
   .
 ```
 
-คำสั่งนี้ build source ใน working tree รวมการแก้ไขที่ยังไม่ commit; ค่า `COMMIT` ระบุ HEAD เท่านั้น จึงควร build จาก working tree ที่สะอาดเมื่อต้องการอ้างอิง revision อย่างแน่นอน Dockerfile ใช้ `-tags sonic` อยู่แล้ว
-
-Env ของ mittr ใช้ตอนรัน ไม่ใช่ตอน build: ไม่ส่ง `CCLOAD_PASS`, API token หรือ DSN ผ่าน `--build-arg` และไม่ฝัง secret ใน image ไฟล์ `.env.mittr.local` ถูกตัดออกจาก build context ด้วย `.dockerignore` เดิม
-
-โดยปกติจะ build ตาม architecture ของ Docker engine เช่น `linux/arm64` บน Apple Silicon หากเครื่องปลายทางเป็น x86-64 ให้ใช้:
-
-```bash
-docker buildx build \
-  --platform linux/amd64 \
-  --build-arg VERSION=1.0.0 \
-  --build-arg COMMIT="$(git rev-parse HEAD)" \
-  --tag mittr-load:1.0.0 \
-  --load \
-  .
-```
-
-การ build architecture อื่นอาจต้องใช้ emulation ที่ Docker engine รองรับ ทั้งสองคำสั่งไม่ push image ไป registry
+การ build ข้างต้นเป็น local เท่านั้นและไม่ได้เปลี่ยน image ที่ Compose ใช้ Env ของ mittr ใช้ตอนรัน ไม่ส่งรหัสผ่าน/API token/DSN ผ่าน build args; `.env.mittr.local` ถูกตัดออกจาก Docker build context
 
 ## 3. ตรวจสอบและเริ่มทำงาน
 
@@ -81,7 +65,7 @@ docker compose --env-file .env.mittr.local -p mittr-load -f docker-compose.mittr
 
 เปิด `http://localhost:8080` หรือ port ที่ตั้งใน `MITTR_PORT` และเข้าสู่ระบบด้วย `CCLOAD_PASS` จากนั้นสร้าง channel และ API token ผ่านหน้าเว็บ
 
-Compose ใช้ `pull_policy: never` จึงต้อง build image ในเครื่องก่อน หากเปลี่ยน image version ต้องแก้ tag ใน `docker-compose.mittr.yml` ให้ตรงกันด้วย
+Compose ใช้ `pull_policy: always` เพื่อดึง tag release ที่ระบุใน `docker-compose.mittr.yml` ทุกครั้งก่อนเริ่ม container; เปลี่ยนเวอร์ชันได้โดยแก้ image tag ในไฟล์นั้น
 
 ### Env ถูกอ่านอย่างไร
 
@@ -106,11 +90,13 @@ curl --fail http://localhost:8080/health
 
 หากเปลี่ยน `MITTR_PORT` ให้ปรับ URL ของ curl ตามนั้น อย่าแชร์ผล `docker compose config` แบบเต็มหรือ `docker inspect` เพราะอาจมี secret
 
-## 5. Rebuild และหยุดทำงาน
+## 5. อัปเดต image และหยุดทำงาน
 
-หลังแก้ source ให้ build ใหม่ด้วยคำสั่งในขั้นตอน 2 แล้วแทนที่ container:
+หลังเปลี่ยน release tag ใน Compose ให้ดึง image และแทนที่ container:
 
 ```bash
+docker compose --env-file .env.mittr.local -p mittr-load -f docker-compose.mittr.yml pull app
+
 docker compose --env-file .env.mittr.local -p mittr-load -f docker-compose.mittr.yml up -d --force-recreate --wait
 ```
 
@@ -124,7 +110,7 @@ docker compose --env-file .env.mittr.local -p mittr-load -f docker-compose.mittr
 
 ## 6. รับการเปลี่ยนแปลงจาก master
 
-การปรับแต่ง deployment ของ mittr อยู่ในไฟล์ชื่อเฉพาะ ไม่แก้ `README.md`, `.env.example`, `.gitignore`, `.dockerignore`, `Dockerfile`, `Makefile`, Compose เดิม หรือ release workflow จึงลดโอกาสชนกับ upstream แต่ไม่รับประกันว่า cherry-pick ทุก commit จะไม่มี conflict หรือไม่มีการเปลี่ยนพฤติกรรม
+การปรับแต่ง deployment ของ mittr อยู่ในไฟล์ชื่อเฉพาะ ไม่แก้ `.env.example`, `.gitignore`, `.dockerignore`, `Dockerfile`, `Makefile` หรือ Compose ทั่วไป จึงลดโอกาสชนกับ upstream แต่ไม่รับประกันว่า cherry-pick ทุก commit จะไม่มี conflict หรือไม่มีการเปลี่ยนพฤติกรรม
 
 ก่อนรวม commit ให้ตรวจ working tree และ commit การเปลี่ยนแปลงที่ต้องการเก็บตาม workflow ของทีม ห้าม stage `.env.mittr.local`
 
@@ -335,7 +321,7 @@ Fixture Docker wrapper ใน tests เพิ่ม label `io.mittr.postgres-reh
 รอบปกติ:
 
 ```bash
-gh workflow run mittr-postgres-rehearsal.yml --repo prawee/ccLoad --ref develop -f simulate_failure=false
+gh workflow run mittr-postgres-rehearsal.yml --repo prawee/mittr-load --ref develop -f simulate_failure=false
 ```
 
 รอรอบปกติจบก่อนเริ่มรอบจำลอง เพราะ concurrency group ใช้ `github.workflow` + `github.ref` และตั้ง `cancel-in-progress: true` รอบใหม่ที่อยู่ group เดียวกัน (รวม push กับ manual dispatch บน branch เดียวกัน) จะยกเลิกรอบก่อนที่ยังทำงานอยู่ ส่วน pull request ใช้ PR ref จึงไม่ใช่ group เดียวกับ branch ref โดยอัตโนมัติ
@@ -343,7 +329,7 @@ gh workflow run mittr-postgres-rehearsal.yml --repo prawee/ccLoad --ref develop 
 รอบจำลองล้มเหลว:
 
 ```bash
-gh workflow run mittr-postgres-rehearsal.yml --repo prawee/ccLoad --ref develop -f simulate_failure=true
+gh workflow run mittr-postgres-rehearsal.yml --repo prawee/mittr-load --ref develop -f simulate_failure=true
 ```
 
 โหมดนี้รัน unit/integration ตามปกติก่อน แล้ว step `Simulate failure with owned fixture` สร้างและเปิด container ชั่วคราวที่ติด ownership/run labels โดยไม่มี network/port ใช้ tmpfs และจงใจจบด้วย exit code 1 เพื่อทดสอบ cleanup นอก test teardown ไม่แก้ production script และไม่ลดเกณฑ์ผ่านของ tests หาก tests ก่อนหน้านี้ไม่ผ่าน step จำลองจะถูกข้าม จึงต้องตรวจว่า failure เกิดจาก step จำลองจริง
@@ -361,10 +347,10 @@ gh workflow run mittr-postgres-rehearsal.yml --repo prawee/ccLoad --ref develop 
 หา run ID ของรอบที่เพิ่งสั่ง แล้วดูสถานะและ log (แทน `RUN_ID` ด้วยเลขจริง):
 
 ```bash
-gh run list --repo prawee/ccLoad --workflow mittr-postgres-rehearsal.yml --branch develop --event workflow_dispatch --limit 5
-gh run watch RUN_ID --repo prawee/ccLoad --exit-status
-gh run view RUN_ID --repo prawee/ccLoad --json conclusion,jobs,url
-gh run view RUN_ID --repo prawee/ccLoad --log
+gh run list --repo prawee/mittr-load --workflow mittr-postgres-rehearsal.yml --branch develop --event workflow_dispatch --limit 5
+gh run watch RUN_ID --repo prawee/mittr-load --exit-status
+gh run view RUN_ID --repo prawee/mittr-load --json conclusion,jobs,url
+gh run view RUN_ID --repo prawee/mittr-load --log
 ```
 
 `watch --exit-status` ของรอบจำลองจะคืน nonzero ตามตั้งใจ ไม่ควรสรุปว่า cleanup ล้มเหลวจาก exit status รวมเพียงอย่างเดียว ให้ดู step cleanup และหลักฐานต่อไปนี้ใน log:
@@ -377,8 +363,8 @@ gh run view RUN_ID --repo prawee/ccLoad --log
 
 ตัวอย่างที่ตรวจบน GitHub แล้ว (เป็นผล ณ commit `4f453b3d` ไม่ใช่การรับรอง commit ถัดไป):
 
-- [รอบปกติ 40050290215](https://github.com/prawee/ccLoad/actions/runs/40050290215): unit 33 + integration 9 ผ่าน และ cleanup ผ่าน
-- [รอบจำลอง 40050413002](https://github.com/prawee/ccLoad/actions/runs/40050413002): tests ผ่าน, step จำลองล้มเหลวตามตั้งใจ, cleanup ลบ fixture 1 ตัวและยืนยัน 0 container/volume พร้อม directory ถูกลบ
+- [รอบปกติ 40050290215](https://github.com/prawee/mittr-load/actions/runs/40050290215): unit 33 + integration 9 ผ่าน และ cleanup ผ่าน
+- [รอบจำลอง 40050413002](https://github.com/prawee/mittr-load/actions/runs/40050413002): tests ผ่าน, step จำลองล้มเหลวตามตั้งใจ, cleanup ลบ fixture 1 ตัวและยืนยัน 0 container/volume พร้อม directory ถูกลบ
 
 ### การแยกจาก production secrets
 

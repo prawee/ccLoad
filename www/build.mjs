@@ -16,7 +16,7 @@ import { fileURLToPath } from 'node:url';
 
 const SRC_DIR = path.dirname(fileURLToPath(import.meta.url));
 export const SITE_URL = 'https://ccload.xyz';
-const GITHUB_URL = 'https://github.com/caidaoli/ccLoad';
+const GITHUB_URL = 'https://github.com/prawee/mittr-load';
 // IndexNow 密钥是公开的站点归属证明，构建时写成 /<key>.txt
 export const INDEXNOW_KEY = 'b60e5cb0a81bf0fdc1966f224ffa73b7';
 

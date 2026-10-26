@@ -1,27 +1,27 @@
 class Ccload < Formula
   desc "Multi-protocol AI API gateway"
-  homepage "https://github.com/caidaoli/ccLoad"
+  homepage "https://github.com/prawee/mittr-load"
   version "4.13.1"
   license "MIT"
 
   on_macos do
     on_arm do
-      url "https://github.com/caidaoli/ccLoad/releases/download/v#{version}/ccload-darwin-arm64"
+      url "https://github.com/prawee/mittr-load/releases/download/v#{version}/ccload-darwin-arm64"
       sha256 "3110d8a688f8cd57abff06000f2bfbab26915e44df348c44d8e700175a115aa3"
     end
     on_intel do
-      url "https://github.com/caidaoli/ccLoad/releases/download/v#{version}/ccload-darwin-amd64"
+      url "https://github.com/prawee/mittr-load/releases/download/v#{version}/ccload-darwin-amd64"
       sha256 "adb5ab39b6c813dc2792c07ffa7bdcf2f1721a1b720bca58472a1c7207b9b8a2"
     end
   end
 
   on_linux do
     on_arm do
-      url "https://github.com/caidaoli/ccLoad/releases/download/v#{version}/ccload-linux-arm64"
+      url "https://github.com/prawee/mittr-load/releases/download/v#{version}/ccload-linux-arm64"
       sha256 "bd93e8abb50f6b5a2e787f6810ebaf22fb6efb84e0e36d6ecb5cdc991eb0e0e9"
     end
     on_intel do
-      url "https://github.com/caidaoli/ccLoad/releases/download/v#{version}/ccload-linux-amd64"
+      url "https://github.com/prawee/mittr-load/releases/download/v#{version}/ccload-linux-amd64"
       sha256 "19cd233772bbe0684ef3a607f3b8ba3bc681fab193875acca0f992f48a5646ca"
     end
   end

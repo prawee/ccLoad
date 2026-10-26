@@ -499,8 +499,8 @@
             </div>
             <div class="www-code-content">
               <pre><code># Download docker-compose.yml and the .env template
-curl -o docker-compose.yml https://raw.githubusercontent.com/caidaoli/ccLoad/master/docker-compose.yml
-curl -o .env https://raw.githubusercontent.com/caidaoli/ccLoad/master/.env.docker.example
+curl -o docker-compose.yml https://raw.githubusercontent.com/prawee/mittr-load/master/docker-compose.yml
+curl -o .env https://raw.githubusercontent.com/prawee/mittr-load/master/.env.docker.example
 
 # Edit .env and set the admin password (required, service exits without it)
 nano .env  # set CCLOAD_PASS=your_password
@@ -526,7 +526,7 @@ docker-compose up -d
               <pre><code>1. Sign in to Hugging Face: https://huggingface.co
 2. Create a new Space: New Space -> Docker -> SDK: Docker
 3. Create Dockerfile:
-   FROM ghcr.io/caidaoli/ccload:latest
+   FROM ghcr.io/prawee/mittr-load:latest
 4. Configure environment variables (Settings -> Variables):
    CCLOAD_PASS=your_admin_password
 5. Wait for the build to finish (about 2-3 minutes)
@@ -545,7 +545,7 @@ docker-compose up -d
             </div>
             <div class="www-code-content">
               <pre><code># Clone the repository
-git clone https://github.com/caidaoli/ccLoad.git
+git clone https://github.com/prawee/mittr-load.git
 cd ccLoad
 
 # Set environment variables
@@ -572,10 +572,10 @@ make build
             </div>
             <div class="www-code-content">
               <pre><code># Download the binary for your platform from GitHub Releases
-# https://github.com/caidaoli/ccLoad/releases/latest
+# https://github.com/prawee/mittr-load/releases/latest
 
 # Linux/macOS example
-wget https://github.com/caidaoli/ccLoad/releases/latest/download/ccload-linux-amd64
+wget https://github.com/prawee/mittr-load/releases/latest/download/ccload-linux-amd64
 chmod +x ccload-linux-amd64
 
 # Cursor SDK Bridge is installed automatically when a Cursor channel exists.
@@ -599,7 +599,7 @@ export CCLOAD_PASS=your_admin_password
               <button class="www-code-copy" data-i18n="www.common.copy">Copy</button>
             </div>
             <div class="www-code-content">
-              <pre><code>brew tap caidaoli/ccload https://github.com/caidaoli/ccLoad.git
+              <pre><code>brew tap caidaoli/ccload https://github.com/prawee/mittr-load.git
 brew install caidaoli/ccload/ccload
 
 mkdir -p "$(brew --prefix)/var/ccload"
@@ -672,7 +672,7 @@ brew services start caidaoli/ccload/ccload</code></pre>
       <p class="www-cta-desc" data-i18n="www.home.cta.desc">Free and MIT licensed. Run it with Docker, Homebrew or a single binary in a few minutes.</p>
       <div class="www-hero-actions">
         <a href="#quickstart" class="www-btn www-btn-primary" data-i18n="www.home.hero.getStarted">Get Started</a>
-        <a href="https://github.com/caidaoli/ccLoad" target="_blank" rel="noopener" class="www-btn www-btn-secondary" data-i18n="www.home.cta.github">Star on GitHub</a>
+        <a href="https://github.com/prawee/mittr-load" target="_blank" rel="noopener" class="www-btn www-btn-secondary" data-i18n="www.home.cta.github">Star on GitHub</a>
       </div>
     </div>
   </section>

@@ -84,7 +84,7 @@ done; done
 
 ## 文档
 
-项目主文档请查看：[GitHub README](https://github.com/caidaoli/ccLoad/blob/master/README.md)。
+项目主文档请查看：[GitHub README](https://github.com/prawee/mittr-load/blob/master/README.md)。
 
 ## 贡献
 

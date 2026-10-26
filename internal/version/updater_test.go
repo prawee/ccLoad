@@ -61,20 +61,20 @@ func TestReleaseAssetNameAndDownloadURL(t *testing.T) {
 
 	source := ReleaseSource{
 		Name:            "ghproxy.net",
-		DownloadBaseURL: "https://ghproxy.net/https://github.com/caidaoli/ccLoad/releases/download",
+		DownloadBaseURL: "https://ghproxy.net/https://github.com/prawee/mittr-load/releases/download",
 	}
 	assetURL, err := releaseDownloadURL(source, "v2.44.0", name)
 	if err != nil {
 		t.Fatalf("releaseDownloadURL(asset): %v", err)
 	}
-	if assetURL != "https://ghproxy.net/https://github.com/caidaoli/ccLoad/releases/download/v2.44.0/ccload-linux-amd64" {
+	if assetURL != "https://ghproxy.net/https://github.com/prawee/mittr-load/releases/download/v2.44.0/ccload-linux-amd64" {
 		t.Fatalf("asset download URL = %q", assetURL)
 	}
 	checksumURL, err := releaseDownloadURL(source, "v2.44.0", "checksums.txt")
 	if err != nil {
 		t.Fatalf("releaseDownloadURL(checksums): %v", err)
 	}
-	if checksumURL != "https://ghproxy.net/https://github.com/caidaoli/ccLoad/releases/download/v2.44.0/checksums.txt" {
+	if checksumURL != "https://ghproxy.net/https://github.com/prawee/mittr-load/releases/download/v2.44.0/checksums.txt" {
 		t.Fatalf("checksum download URL = %q", checksumURL)
 	}
 
@@ -91,24 +91,24 @@ func TestUpdateManagerReleaseSourceConfiguration(t *testing.T) {
 	t.Run("defaults try three mirrors then GitHub", func(t *testing.T) {
 		t.Setenv("CCLOAD_RELEASE_BASE_URL", "")
 		assertUpdateManagerReleaseRequests(t, ReleaseChannelStable, []string{
-			"https://gh.monlor.com/https://github.com/caidaoli/ccLoad/releases/latest",
-			"https://fastgit.cc/https://github.com/caidaoli/ccLoad/releases/latest",
-			"https://ghfast.top/https://github.com/caidaoli/ccLoad/releases/latest",
-			"https://github.com/caidaoli/ccLoad/releases/latest",
+			"https://gh.monlor.com/https://github.com/prawee/mittr-load/releases/latest",
+			"https://fastgit.cc/https://github.com/prawee/mittr-load/releases/latest",
+			"https://ghfast.top/https://github.com/prawee/mittr-load/releases/latest",
+			"https://github.com/prawee/mittr-load/releases/latest",
 		})
 	})
 
 	t.Run("preview reads the GitHub releases feed", func(t *testing.T) {
 		t.Setenv("CCLOAD_RELEASE_BASE_URL", "")
 		assertUpdateManagerReleaseRequests(t, ReleaseChannelPreview, []string{
-			"https://github.com/caidaoli/ccLoad/releases.atom",
+			"https://github.com/prawee/mittr-load/releases.atom",
 		})
 	})
 
 	t.Run("custom base disables built-in fallback", func(t *testing.T) {
-		t.Setenv("CCLOAD_RELEASE_BASE_URL", "https://mirror.example/https://github.com/caidaoli/ccLoad/releases/latest/download/")
+		t.Setenv("CCLOAD_RELEASE_BASE_URL", "https://mirror.example/https://github.com/prawee/mittr-load/releases/latest/download/")
 		assertUpdateManagerReleaseRequests(t, ReleaseChannelStable, []string{
-			"https://mirror.example/https://github.com/caidaoli/ccLoad/releases/latest",
+			"https://mirror.example/https://github.com/prawee/mittr-load/releases/latest",
 		})
 	})
 
@@ -159,8 +159,8 @@ func TestUpdateManagerCheckOnlyPublishesReleaseStateWithoutDownload(t *testing.T
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/latest":
-			http.Redirect(w, r, "/caidaoli/ccLoad/releases/tag/v2.0.0", http.StatusFound)
-		case "/caidaoli/ccLoad/releases/tag/v2.0.0":
+			http.Redirect(w, r, "/prawee/mittr-load/releases/tag/v2.0.0", http.StatusFound)
+		case "/prawee/mittr-load/releases/tag/v2.0.0":
 			_, _ = fmt.Fprint(w, "<html></html>")
 		default:
 			downloadRequests.Add(1)
@@ -174,7 +174,7 @@ func TestUpdateManagerCheckOnlyPublishesReleaseStateWithoutDownload(t *testing.T
 		ReleaseSources: []ReleaseSource{{
 			Name:            "test",
 			LatestURL:       server.URL + "/latest",
-			DownloadBaseURL: server.URL + "/caidaoli/ccLoad/releases/download",
+			DownloadBaseURL: server.URL + "/prawee/mittr-load/releases/download",
 		}},
 		Client: server.Client(),
 	})
@@ -197,7 +197,7 @@ func TestUpdateManagerCheckOnlyPublishesReleaseStateWithoutDownload(t *testing.T
 	<-done
 
 	state := manager.State()
-	if !state.HasUpdate || state.LatestVersion != "v2.0.0" || state.ReleaseURL != server.URL+"/caidaoli/ccLoad/releases/tag/v2.0.0" {
+	if !state.HasUpdate || state.LatestVersion != "v2.0.0" || state.ReleaseURL != server.URL+"/prawee/mittr-load/releases/tag/v2.0.0" {
 		t.Fatalf("update state=%+v", state)
 	}
 	if state.PendingRestart || downloadRequests.Load() != 0 {
@@ -214,8 +214,8 @@ func TestUpdateManagerCheckNowAppliesReleaseWhenScheduledChecksAreDisabled(t *te
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/latest":
-			http.Redirect(w, r, "/caidaoli/ccLoad/releases/tag/v1.1.0", http.StatusFound)
-		case "/caidaoli/ccLoad/releases/tag/v1.1.0":
+			http.Redirect(w, r, "/prawee/mittr-load/releases/tag/v1.1.0", http.StatusFound)
+		case "/prawee/mittr-load/releases/tag/v1.1.0":
 			_, _ = fmt.Fprint(w, "<html></html>")
 		case "/download/v1.1.0/checksums.txt":
 			_, _ = fmt.Fprint(w, testReleaseChecksums(application))
@@ -687,7 +687,7 @@ func TestFetchLatestReleaseReadsUnfollowedRedirectLocation(t *testing.T) {
 			http.NotFound(w, r)
 			return
 		}
-		http.Redirect(w, r, "/caidaoli/ccLoad/releases/tag/v2.44.0", http.StatusFound)
+		http.Redirect(w, r, "/prawee/mittr-load/releases/tag/v2.44.0", http.StatusFound)
 	}))
 	defer server.Close()
 
@@ -703,7 +703,7 @@ func TestFetchLatestReleaseReadsUnfollowedRedirectLocation(t *testing.T) {
 	if release.TagName != "v2.44.0" {
 		t.Fatalf("TagName = %q", release.TagName)
 	}
-	wantURL := server.URL + "/caidaoli/ccLoad/releases/tag/v2.44.0"
+	wantURL := server.URL + "/prawee/mittr-load/releases/tag/v2.44.0"
 	if release.HTMLURL != wantURL {
 		t.Fatalf("HTMLURL = %q, want %q", release.HTMLURL, wantURL)
 	}
@@ -752,13 +752,13 @@ func TestUpdateOnceReplacesPendingVersionWithNewerDownloadedRelease(t *testing.T
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case "/latest":
-			http.Redirect(w, r, "/caidaoli/ccLoad/releases/tag/"+latest, http.StatusFound)
-		case "/caidaoli/ccLoad/releases/tag/v1.0.1", "/caidaoli/ccLoad/releases/tag/v1.0.2":
+			http.Redirect(w, r, "/prawee/mittr-load/releases/tag/"+latest, http.StatusFound)
+		case "/prawee/mittr-load/releases/tag/v1.0.1", "/prawee/mittr-load/releases/tag/v1.0.2":
 			_, _ = fmt.Fprintf(w, "<html><title>%s</title></html>", latest)
-		case "/caidaoli/ccLoad/releases/download/v1.0.1/ccload-linux-amd64", "/caidaoli/ccLoad/releases/download/v1.0.2/ccload-linux-amd64":
+		case "/prawee/mittr-load/releases/download/v1.0.1/ccload-linux-amd64", "/prawee/mittr-load/releases/download/v1.0.2/ccload-linux-amd64":
 			tag := filepath.Base(filepath.Dir(r.URL.Path))
 			_, _ = w.Write(binaries[tag])
-		case "/caidaoli/ccLoad/releases/download/v1.0.1/checksums.txt", "/caidaoli/ccLoad/releases/download/v1.0.2/checksums.txt":
+		case "/prawee/mittr-load/releases/download/v1.0.1/checksums.txt", "/prawee/mittr-load/releases/download/v1.0.2/checksums.txt":
 			tag := filepath.Base(filepath.Dir(r.URL.Path))
 			_, _ = fmt.Fprint(w, testReleaseChecksums(binaries[tag]))
 		default:
@@ -780,7 +780,7 @@ func TestUpdateOnceReplacesPendingVersionWithNewerDownloadedRelease(t *testing.T
 		ReleaseSources: []ReleaseSource{{
 			Name:            "test",
 			LatestURL:       server.URL + "/latest",
-			DownloadBaseURL: server.URL + "/caidaoli/ccLoad/releases/download",
+			DownloadBaseURL: server.URL + "/prawee/mittr-load/releases/download",
 		}},
 		ExecutablePath: exePath,
 		Client:         server.Client(),
