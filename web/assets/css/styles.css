@@ -887,18 +887,6 @@ html[data-resolved-theme="dark"] .login-brand-wordmark {
   font-weight: var(--font-medium);
 }
 
-/* 版本+GitHub组 */
-.version-group {
-  display: flex;
-  align-items: center;
-  gap: 0;
-  height: 32px;
-  padding: 0 2px 0 10px;
-  border: 1px solid var(--surface-border);
-  border-radius: 999px;
-  background: var(--surface-bg);
-}
-
 /* 版本徽章 - 轻量纯文本样式 */
 .version-badge {
   display: inline-flex;
@@ -928,23 +916,6 @@ html[data-resolved-theme="dark"] .login-brand-wordmark {
   height: 6px;
   background: var(--success-500);
   border-radius: 50%;
-}
-
-/* GitHub链接 */
-.github-link {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  color: var(--neutral-500);
-  transition: color 0.2s, background 0.2s;
-}
-
-.github-link:hover {
-  background: var(--surface-hover);
-  color: var(--neutral-900);
 }
 
 .theme-switcher {
@@ -2303,10 +2274,6 @@ html[data-resolved-theme="dark"] .time-range-selector {
 
   .topbar-right {
     gap: 6px;
-  }
-
-  .version-group {
-    padding-left: 8px;
   }
 
   /* 长版本号（如开发构建的 git describe）截断，避免工具区换行撑高顶栏 */

@@ -332,10 +332,6 @@ window.WebAuth = window.WebAuth || {
     return token && (!expiry || Date.now() <= parseInt(expiry));
   }
 
-  // GitHub仓库地址
-  const GITHUB_REPO_URL = 'https://github.com/caidaoli/ccLoad';
-  const GITHUB_RELEASES_URL = 'https://github.com/caidaoli/ccLoad/releases';
-
   // 版本信息
   let versionInfo = null;
 
@@ -375,16 +371,6 @@ window.WebAuth = window.WebAuth || {
   // 初始化版本显示
   function initVersionDisplay() {
     fetchVersionInfo().then(() => updateVersionDisplay());
-  }
-
-  // GitHub图标
-  function iconGitHub() {
-    const el = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
-    el.setAttribute('fill', 'currentColor');
-    el.setAttribute('viewBox', '0 0 24 24');
-    el.classList.add('w-5', 'h-5');
-    el.innerHTML = '<path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z"/>';
-    return el;
   }
 
   // ---- 活动请求指示器（脉冲 + 角标 + favicon）----
@@ -664,12 +650,8 @@ window.WebAuth = window.WebAuth || {
     _activeWrap = h('span', { class: 'brand-icon-wrap' }, [speedLines, iconImg, flowDots, _activeBadge]);
 
     const left = h('div', { class: 'topbar-left' }, [
-      h('a', {
+      h('div', {
         class: 'brand',
-        href: GITHUB_REPO_URL,
-        target: '_blank',
-        rel: 'noopener noreferrer',
-        title: t('nav.githubRepo'),
         'aria-label': 'mittr load'
       }, [
         _activeWrap
@@ -687,29 +669,14 @@ window.WebAuth = window.WebAuth || {
     ]);
     const loggedIn = isLoggedIn();
 
-    // 版本信息组件（点击跳转到GitHub releases页面）
-    const versionBadge = h('a', {
+    // 版本信息
+    const versionBadge = h('span', {
       id: 'version-badge',
       class: 'version-badge',
-      href: GITHUB_RELEASES_URL,
-      target: '_blank',
-      rel: 'noopener noreferrer',
       title: t('version.checkUpdate')
     }, [
       h('span', { id: 'version-display' }, 'v...')
     ]);
-
-    // GitHub链接
-    const githubLink = h('a', {
-      href: GITHUB_REPO_URL,
-      target: '_blank',
-      rel: 'noopener noreferrer',
-      class: 'github-link',
-      title: t('nav.githubRepo')
-    }, [iconGitHub()]);
-
-    // 版本+GitHub组合成一个视觉组
-    const versionGroup = h('div', { class: 'version-group' }, [versionBadge, githubLink]);
 
     // 语言切换器
     const langSwitcher = window.i18n ? window.i18n.createLanguageSwitcher() : null;
@@ -722,7 +689,7 @@ window.WebAuth = window.WebAuth || {
     ].filter(Boolean));
 
     const right = h('div', { class: 'topbar-right' }, [
-      versionGroup,
+      versionBadge,
       tools,
       h('button', {
         id: 'auth-btn',

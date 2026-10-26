@@ -31,7 +31,7 @@ test('all admin pages invalidate the pre-mittr immutable UI script cache', () =>
   for (const page of pages) {
     const html = fs.readFileSync(path.join(webRoot, page), 'utf8');
     if (!html.includes('/web/assets/js/ui.js')) continue;
-    assert.match(html, /src="\/web\/assets\/js\/ui\.js\?v=__VERSION__-mittr-1"/, page);
+    assert.match(html, /src="\/web\/assets\/js\/ui\.js\?v=__VERSION__-mittr-[1-9]\d*"/, page);
     checked++;
   }
   assert.ok(checked > 0);
@@ -130,6 +130,7 @@ function descendants(node) {
 test('topbar renders the mittr wordmark without a separate logo and retains activity indicators', () => {
   const nodes = descendants(renderTopbar());
   const brand = nodes.find(node => node.attrs.class === 'brand');
+  assert.equal(brand.tag, 'div');
   assert.equal(brand.attrs['aria-label'], 'mittr load');
   assert.equal(brand.children.length, 1);
   const wrap = brand.children[0];
@@ -144,6 +145,9 @@ test('topbar renders the mittr wordmark without a separate logo and retains acti
     assert.ok(wrap.children.some(node => node.attrs.class === className));
   }
   assert.ok(!descendants(brand).some(node => node.tag === 'svg' || node.attrs.class === 'brand-wordmark'));
+  assert.ok(!nodes.some(node => node.attrs.href && /github\.com/i.test(node.attrs.href)));
+  assert.ok(!nodes.some(node => node.attrs.class === 'github-link'));
+  assert.ok(nodes.some(node => node.attrs.id === 'version-display'));
   assert.doesNotMatch(source, /BRAND_MARK_SVG|BRAND_WORDMARK_SVG|createInlineBrandSVG/);
 });
 
