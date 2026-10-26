@@ -1,6 +1,6 @@
 services:
   app:
-    image: mittr-load:1.0.0
+    image: mittr-load:1.0.1
     pull_policy: never
     restart: unless-stopped
     ports:

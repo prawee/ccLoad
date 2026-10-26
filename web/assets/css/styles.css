@@ -518,10 +518,6 @@ html[data-resolved-theme="dark"] ::selection {
   text-decoration: none;
 }
 
-.brand:hover {
-  opacity: 0.8;
-}
-
 .brand-mark {
   display: block;
   width: 132px;
