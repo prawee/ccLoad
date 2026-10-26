@@ -56,7 +56,7 @@ docker run -d --name ccload \
   -p 8080:8080 \
   -e CCLOAD_PASS=换成你的管理密码 \
   -v ccload_data:/app/data \
-  ghcr.io/prawee/mittr-load:latest
+  ghcr.io/prawee/mittr-load:v0.0.5
 ```
 
 数据保存在 Docker 卷 `ccload_data` 里，删除或升级容器都不会丢失。

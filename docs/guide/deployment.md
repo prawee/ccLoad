@@ -22,12 +22,12 @@ curl -o .env https://raw.githubusercontent.com/prawee/mittr-load/master/.env.doc
 docker compose up -d
 
 # Option 2: Run image directly
-docker pull ghcr.io/prawee/mittr-load:latest
+docker pull ghcr.io/prawee/mittr-load:v0.0.5
 docker run -d --name ccload \
   -p 8080:8080 \
   -e CCLOAD_PASS=your_secure_password \
   -v ccload_data:/app/data \
-  ghcr.io/prawee/mittr-load:latest
+  ghcr.io/prawee/mittr-load:v0.0.5
 ```
 
 **Building from source**:
@@ -138,7 +138,7 @@ Hugging Face Spaces provides free container hosting with Docker support, ideal f
    Create a `Dockerfile` in the Space repository:
 
    ```dockerfile
-   FROM ghcr.io/prawee/mittr-load:latest
+   FROM ghcr.io/prawee/mittr-load:v0.0.5
    ENV TZ=Asia/Shanghai
    ENV PORT=7860
    ENV SQLITE_PATH=/tmp/ccload.db
@@ -263,7 +263,7 @@ URL and libpq keyword DSNs are supported. Do not set `CCLOAD_MYSQL` and `CCLOAD_
 With pre-built images, updates are simple:
 
 **Image Refresh**:
-- When new version image (`ghcr.io/prawee/mittr-load:latest`) is released
+- When new version image (`ghcr.io/prawee/mittr-load:v0.0.5`) is released
 - Click "Factory rebuild" in Space settings to pull latest image
 - Or wait for Hugging Face auto-restart (typically after 48 hours)
 
@@ -355,7 +355,7 @@ services:
       retries: 5
 
   ccload:
-    image: ghcr.io/prawee/mittr-load:latest
+    image: ghcr.io/prawee/mittr-load:v0.0.5
     environment:
       CCLOAD_PASS: your_admin_password
       CCLOAD_MYSQL: "ccload:ccloadpass@tcp(mysql:3306)/ccload?charset=utf8mb4"
@@ -377,7 +377,7 @@ docker run -d --name ccload \
   -p 8080:8080 \
   -e CCLOAD_PASS=your_admin_password \
   -e CCLOAD_MYSQL="user:pass@tcp(mysql_host:3306)/ccload?charset=utf8mb4" \
-  ghcr.io/prawee/mittr-load:latest
+  ghcr.io/prawee/mittr-load:v0.0.5
 ```
 
 **Docker + PostgreSQL** (requires an existing PostgreSQL service):
@@ -386,7 +386,7 @@ docker run -d --name ccload \
   -p 8080:8080 \
   -e CCLOAD_PASS=your_admin_password \
   -e CCLOAD_POSTGRES="postgres://user:pass@postgres_host:5432/ccload?sslmode=require" \
-  ghcr.io/prawee/mittr-load:latest
+  ghcr.io/prawee/mittr-load:v0.0.5
 ```
 
 After service starts, access:
@@ -412,7 +412,7 @@ The official GHCR runtime image is Debian/glibc-based and immutable because the 
 
 ```bash
 # Pull latest version
-docker pull ghcr.io/prawee/mittr-load:latest
+docker pull ghcr.io/prawee/mittr-load:v0.0.5
 
 # Pull specific version
 docker pull ghcr.io/prawee/mittr-load:v4.10.2
@@ -425,8 +425,8 @@ docker compose pull
 docker compose up -d
 
 # Specify architecture (Docker usually auto-selects)
-docker pull --platform linux/amd64 ghcr.io/prawee/mittr-load:latest
-docker pull --platform linux/arm64 ghcr.io/prawee/mittr-load:latest
+docker pull --platform linux/amd64 ghcr.io/prawee/mittr-load:v0.0.5
+docker pull --platform linux/arm64 ghcr.io/prawee/mittr-load:v0.0.5
 ```
 
 ## Auto Updates

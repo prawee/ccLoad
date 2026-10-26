@@ -56,7 +56,7 @@ docker run -d --name ccload \
   -p 8080:8080 \
   -e CCLOAD_PASS=your_admin_password \
   -v ccload_data:/app/data \
-  ghcr.io/prawee/mittr-load:latest
+  ghcr.io/prawee/mittr-load:v0.0.5
 ```
 
 Data lives in the Docker volume `ccload_data`, so removing or upgrading the container keeps it.

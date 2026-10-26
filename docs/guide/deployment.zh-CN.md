@@ -24,12 +24,12 @@ curl -o .env https://raw.githubusercontent.com/prawee/mittr-load/master/.env.doc
 docker compose up -d
 
 # 方式 2: 直接运行镜像
-docker pull ghcr.io/prawee/mittr-load:latest
+docker pull ghcr.io/prawee/mittr-load:v0.0.5
 docker run -d --name ccload \
   -p 8080:8080 \
   -e CCLOAD_PASS=your_secure_password \
   -v ccload_data:/app/data \
-  ghcr.io/prawee/mittr-load:latest
+  ghcr.io/prawee/mittr-load:v0.0.5
 ```
 
 **从源码构建**：
@@ -146,7 +146,7 @@ Hugging Face Spaces 提供免费的 Docker 托管和自动 HTTPS，适合个人�
    在 Space 仓库中创建 `Dockerfile` 文件，内容如下：
 
    ```dockerfile
-   FROM ghcr.io/prawee/mittr-load:latest
+   FROM ghcr.io/prawee/mittr-load:v0.0.5
    ENV TZ=Asia/Shanghai
    ENV PORT=7860
    ENV SQLITE_PATH=/tmp/ccload.db
@@ -274,7 +274,7 @@ CCLOAD_POSTGRES=postgres://user:password@host:5432/ccload?sslmode=require
 由于使用预构建镜像，更新非常简单：
 
 **镜像更新**:
-- 当官方发布新版本镜像（`ghcr.io/prawee/mittr-load:latest`）时
+- 当官方发布新版本镜像（`ghcr.io/prawee/mittr-load:v0.0.5`）时
 - 在 Space 设置中点击 "Factory rebuild" 即可自动拉取最新镜像
 - 或等待 Hugging Face 自动重启（通常 48 小时后）
 
@@ -368,7 +368,7 @@ services:
       retries: 5
 
   ccload:
-    image: ghcr.io/prawee/mittr-load:latest
+    image: ghcr.io/prawee/mittr-load:v0.0.5
     environment:
       CCLOAD_PASS: your_admin_password
       CCLOAD_MYSQL: "ccload:ccloadpass@tcp(mysql:3306)/ccload?charset=utf8mb4"
@@ -390,7 +390,7 @@ docker run -d --name ccload \
   -p 8080:8080 \
   -e CCLOAD_PASS=your_admin_password \
   -e CCLOAD_MYSQL="user:pass@tcp(mysql_host:3306)/ccload?charset=utf8mb4" \
-  ghcr.io/prawee/mittr-load:latest
+  ghcr.io/prawee/mittr-load:v0.0.5
 ```
 
 **Docker + PostgreSQL**（需要已有 PostgreSQL 服务）:
@@ -399,7 +399,7 @@ docker run -d --name ccload \
   -p 8080:8080 \
   -e CCLOAD_PASS=your_admin_password \
   -e CCLOAD_POSTGRES="postgres://user:pass@postgres_host:5432/ccload?sslmode=require" \
-  ghcr.io/prawee/mittr-load:latest
+  ghcr.io/prawee/mittr-load:v0.0.5
 ```
 
 服务启动后访问：
@@ -425,7 +425,7 @@ docker run -d --name ccload \
 
 ```bash
 # 拉取最新版本
-docker pull ghcr.io/prawee/mittr-load:latest
+docker pull ghcr.io/prawee/mittr-load:v0.0.5
 
 # 拉取指定版本
 docker pull ghcr.io/prawee/mittr-load:v4.10.2
@@ -438,8 +438,8 @@ docker compose pull
 docker compose up -d
 
 # 指定架构（Docker 通常自动选择）
-docker pull --platform linux/amd64 ghcr.io/prawee/mittr-load:latest
-docker pull --platform linux/arm64 ghcr.io/prawee/mittr-load:latest
+docker pull --platform linux/amd64 ghcr.io/prawee/mittr-load:v0.0.5
+docker pull --platform linux/arm64 ghcr.io/prawee/mittr-load:v0.0.5
 ```
 
 ## 自动更新
