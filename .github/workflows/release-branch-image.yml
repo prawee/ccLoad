@@ -110,6 +110,7 @@ jobs:
 
   build:
     name: Build linux-${{ matrix.goarch }} binary
+    needs: version
     runs-on: ubuntu-latest
     strategy:
       matrix:
@@ -128,10 +129,15 @@ jobs:
           GOOS: linux
           GOARCH: ${{ matrix.goarch }}
           CGO_ENABLED: '0'
+          RELEASE_VERSION: ${{ needs.version.outputs.tag }}
+          GIT_COMMIT: ${{ github.sha }}
         run: |
           mkdir -p dist
           go build -tags sonic -trimpath \
-            -ldflags "-s -w -X ccLoad/internal/version.BuiltBy=github-actions" \
+            -ldflags "-s -w \
+              -X ccLoad/internal/version.Version=${RELEASE_VERSION} \
+              -X ccLoad/internal/version.Commit=${GIT_COMMIT} \
+              -X ccLoad/internal/version.BuiltBy=github-actions" \
             -o "dist/ccload-linux-${GOARCH}" .
 
       - name: Upload binary
