@@ -233,19 +233,34 @@ docker compose --env-file .env.mittr-postgres.local -p mittr-postgres -f docker-
 
 ห้ามใช้ `down -v`/`down --volumes` หากต้องการเก็บข้อมูล และคง project name เดิมเพื่อใช้ volume เดิม ค่า `POSTGRES_DB`/`POSTGRES_USER`/password ใช้ initialize volume ว่างเท่านั้น การแก้ env ไม่เปลี่ยน database/user/password ใน volume ที่มีข้อมูล ต้องจัดการด้วย SQL และขั้นตอน rotation ที่เหมาะสม ไม่ลบ volume เพื่อเปลี่ยนรหัสผ่าน ไม่เปลี่ยน major version บน volume เดิมโดยไม่มีแผน upgrade/backup
 
-### เชื่อมต่อ app เมื่อเลือกเปลี่ยน database เองเท่านั้น
+### ใช้ PostgreSQL เป็นฐานข้อมูลของ app (รวม deployment)
 
-การเริ่ม PostgreSQL **ไม่สลับ app ออกจาก SQLite** และไม่มีการย้ายข้อมูล SQLite ไป PostgreSQL อัตโนมัติ หากเลือกสลับภายหลัง ต้องวางแผน migration/backup และทดสอบก่อน; database ใหม่จะไม่มี configuration/history เดิม
+PostgreSQL ต้องสร้าง database/user และกำหนด network/firewall ให้ app container เชื่อมต่อได้ก่อน การเริ่ม PostgreSQL container **ไม่สลับ app ออกจาก SQLite**; ต้องตั้ง `CCLOAD_POSTGRES` ใน `.env.mittr.local` และ recreate app เอง การตั้งค่านี้เป็นเพียงการเลือก backend ไม่ได้ย้ายข้อมูลจาก SQLite: app จะสร้าง/ปรับ schema ใน PostgreSQL และเริ่มอ่านข้อมูลจากฐานนั้น ขณะที่ `data/ccload.db` ยังคงอยู่แยกต่างหาก
 
-บนเครื่อง host ใช้ `127.0.0.1:5433` ส่วน app ใน Docker Desktop บน macOS/Windows ใช้ `host.docker.internal:5433` ตัวอย่างต่อไปนี้ให้เพิ่มเองใน `.env.mittr.local` **เฉพาะเมื่อตั้งใจเปลี่ยน backend** แล้ว recreate app ตามขั้นตอน 5:
+แก้ `.env.mittr.local` ให้มี DSN จริงหนึ่งบรรทัด (แทนค่าเดิมถ้ามี):
 
 ```dotenv
-CCLOAD_POSTGRES='postgres://mittr:replace-with-url-encoded-password@host.docker.internal:5433/mittr?sslmode=disable'
+CCLOAD_POSTGRES='postgres://<user>:<url-encoded-password>@<reachable-host>:<port>/<database>?sslmode=require'
 ```
 
-แทน password ด้วยค่าจริงที่ percent-encode ตามรูปแบบ URL และปรับ database/user/port ให้ตรงกับ PostgreSQL; ห้ามตั้ง `CCLOAD_MYSQL` พร้อมกัน และอย่าตั้ง `CCLOAD_ENABLE_SQLITE_REPLICA=1` หากต้องการ pure PostgreSQL app Compose ส่ง DSN ผ่าน `env_file: .env.mittr.local` อยู่แล้ว ไม่ส่ง env ของ PostgreSQL ทั้งไฟล์เข้า app
+ใช้ host/port/database ที่ PostgreSQL อนุญาตจาก **ภายใน app container** ไม่ใช่ค่าที่ใช้จาก host โดยอัตโนมัติ; บน Docker Desktop ที่เชื่อมกับ PostgreSQL local ซึ่ง publish port `5433` ใช้ `host.docker.internal:5433` ได้ ส่วน managed/remote PostgreSQL ใช้ hostname และ port ที่ผู้ให้บริการระบุ ตรวจ firewall, TLS และ allowlist ให้ตรงกับทางเชื่อมต่อจริง ตั้ง `sslmode=require` สำหรับ deployment ที่รองรับ TLS; `sslmode=disable` ด้านล่างใช้เฉพาะ local development บนเครื่องที่เชื่อถือได้เท่านั้น
 
-ชื่อ service `postgres` ไม่ resolve ข้ามสอง project และ `127.0.0.1` ใน app container คือ app เอง บน Linux Docker Engine ไม่มีเส้นทาง `host.docker.internal` อัตโนมัติ; การเพิ่ม host-gateway อย่างเดียวอาจยังเข้า port ที่ bind loopback ไม่ได้ ต้องออกแบบ shared network/เส้นทางเชื่อมต่อแยกก่อน ไม่เปิด bind เป็น `0.0.0.0` เพื่อแก้ปัญหาโดยไม่ประเมินความปลอดภัย `sslmode=disable` ในตัวอย่างมีไว้สำหรับ local development นี้เท่านั้น
+รหัสผ่านใน URL ต้อง percent-encode อักขระพิเศษ ห้ามใส่ DSN ใน command line, commit, issue หรือ log; เก็บไฟล์เป็น permission `600` และอย่าแชร์ผล `docker compose config` แบบเต็มหรือ `docker inspect` เพราะอาจมี secret ห้ามตั้ง `CCLOAD_MYSQL` พร้อมกัน หากต้องการ pure PostgreSQL อย่าตั้ง `CCLOAD_ENABLE_SQLITE_REPLICA=1`
+
+หลังแก้ DSN ให้ validate แล้ว force-recreate app เพื่อให้ Compose อ่าน env file ใหม่ (การ restart container เดิมอย่างเดียวไม่โหลดค่าไฟล์ที่เปลี่ยน):
+
+```bash
+chmod 600 .env.mittr.local
+docker compose --env-file .env.mittr.local -p mittr-load -f docker-compose.mittr.yml config --quiet
+docker compose --env-file .env.mittr.local -p mittr-load -f docker-compose.mittr.yml up -d --no-deps --force-recreate --wait app
+docker compose --env-file .env.mittr.local -p mittr-load -f docker-compose.mittr.yml ps
+curl --fail http://localhost:${MITTR_PORT:-8080}/health
+docker compose --env-file .env.mittr.local -p mittr-load -f docker-compose.mittr.yml logs --tail 100 app
+```
+
+ยืนยัน log ว่าระบุ `使用 PostgreSQL 存储（纯模式）` หรือ `使用 PostgreSQL 存储（混合模式）` ตาม config และ health check ผ่าน; ตรวจ database/table ผ่าน connection ที่ใช้ DSN เดียวกันโดยไม่พิมพ์ credential ออกมา ระวัง `ps`/`logs` ปกติแต่ละอย่างไม่ได้ยืนยันว่าใช้ database ที่ตั้งใจ หากแก้ DSN แล้ว container เดิมยังทำงานอยู่ ให้อ่าน `CCLOAD_POSTGRES` ใน container แบบปกปิด secret และเทียบเพียง host/port/database กับไฟล์
+
+บน Docker Desktop หาก app กับ PostgreSQL local แยก Compose project กัน ชื่อ service `postgres` จะ resolve ข้าม project ไม่ได้ และ `127.0.0.1` ใน app container คือ app เอง จึงใช้ `host.docker.internal` กับ port ที่ publish บน host ได้ บน Linux Docker Engine ไม่มีเส้นทาง `host.docker.internal` อัตโนมัติ; การเพิ่ม host-gateway อย่างเดียวอาจยังเข้า port ที่ bind loopback ไม่ได้ ต้องออกแบบ shared network/เส้นทางเชื่อมต่อแยกก่อน ไม่เปิด bind เป็น `0.0.0.0` โดยไม่ประเมินความปลอดภัย
 
 สำรอง PostgreSQL ด้วยเครื่องมือ PostgreSQL เช่น `pg_dump`/`pg_restore` และทดสอบกู้คืนแยกต่างหาก **ห้ามใช้ `scripts/mittr_sqlite_backup.py` กับ PostgreSQL** สำรอง env/secret แบบเข้ารหัสแยกจาก database; named volume ไม่ใช่ backup
 
