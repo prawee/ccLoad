@@ -271,9 +271,9 @@ func TestAdminStats_PublicAndCooldownEndpoints(t *testing.T) {
 			t.Fatalf("status=%d, want %d, body=%s", w.Code, http.StatusOK, w.Body.String())
 		}
 
-		// 验证缓存头（版本信息缓存5分钟）
-		if cc := w.Header().Get("Cache-Control"); cc != "public, max-age=300" {
-			t.Fatalf("Cache-Control=%q, want %q", cc, "public, max-age=300")
+		// 版本信息不能被浏览器或共享代理缓存，以免显示旧实例版本。
+		if cc := w.Header().Get("Cache-Control"); cc != "no-store" {
+			t.Fatalf("Cache-Control=%q, want %q", cc, "no-store")
 		}
 
 		var resp struct {

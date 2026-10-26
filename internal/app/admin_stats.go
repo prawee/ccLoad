@@ -398,9 +398,9 @@ func (s *Server) HandleGetProtocols(c *gin.Context) {
 
 // HandlePublicVersion 获取当前版本信息(公开端点,前端显示版本)
 // GET /public/version
-// 版本信息变化频率极低，缓存5分钟。
+// 版本信息必须反映当前实例，避免代理或浏览器展示旧版本。
 func (s *Server) HandlePublicVersion(c *gin.Context) {
-	c.Header("Cache-Control", "public, max-age=300")
+	c.Header("Cache-Control", "no-store")
 	state := version.UpdateState{}
 	if s.updateManager != nil {
 		state = s.updateManager.State()

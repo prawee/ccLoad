@@ -338,7 +338,8 @@ window.WebAuth = window.WebAuth || {
   // 获取版本信息（后端已包含新版本检测结果）
   async function fetchVersionInfo() {
     try {
-      const res = await fetch('/public/version');
+      const res = await fetch('/public/version', { cache: 'no-store' });
+      if (!res.ok) throw new Error(`Version request failed: ${res.status}`);
       const resp = await res.json();
       versionInfo = resp.data;
       return versionInfo;
