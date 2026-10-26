@@ -8,7 +8,7 @@
   window.I18N_LOCALES = window.I18N_LOCALES || {};
 
   // 当前语言
-  let currentLocale = 'zh-CN';
+  let currentLocale = 'en';
 
   // 支持的语言列表
   const SUPPORTED_LOCALES = ['zh-CN', 'en'];
@@ -23,16 +23,6 @@
   const refreshCallbacks = [];
 
   /**
-   * 检测浏览器语言
-   * @returns {string} 语言代码
-   */
-  function detectBrowserLocale() {
-    const nav = navigator.language || navigator.userLanguage || 'zh-CN';
-    if (nav.startsWith('en')) return 'en';
-    return 'zh-CN';
-  }
-
-  /**
    * 初始化 i18n
    */
   function init() {
@@ -40,7 +30,7 @@
     if (saved && SUPPORTED_LOCALES.includes(saved)) {
       currentLocale = saved;
     } else {
-      currentLocale = detectBrowserLocale();
+      currentLocale = 'en';
     }
     document.documentElement.lang = currentLocale;
   }
