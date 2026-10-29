@@ -1,6 +1,6 @@
 services:
   app:
-    image: ghcr.io/prawee/mittr-load:v0.0.5
+    image: ghcr.io/prawee/mittr-load:v0.0.7
     pull_policy: always
     restart: unless-stopped
     ports:
