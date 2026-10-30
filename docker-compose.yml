@@ -1,7 +1,8 @@
+version: '3.8'
+
 services:
   ccload:
-    image: ghcr.io/prawee/mittr-load:v0.0.5
-    pull_policy: always
+    image: ghcr.io/caidaoli/ccload:latest
     container_name: ccload
     user: root
     restart: unless-stopped
