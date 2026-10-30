@@ -7,7 +7,7 @@
 | ไฟล์ | หน้าที่ |
 | --- | --- |
 | `README.mittr.md` | คู่มือฉบับนี้ |
-| `docker-compose.mittr.yml` | รัน release image `ghcr.io/prawee/mittr-load:v0.0.7` |
+| `docker-compose.mittr.yml` | รัน release image `ghcr.io/prawee/mittr-load:v0.0.8` |
 | `.env.mittr.example` | ตัวอย่าง env ที่คัดลอกจาก `.env.example` โดยคงเนื้อหาเดิม |
 | `docker-compose.mittr-postgres.yml` | PostgreSQL แบบ optional แยก project จาก app |
 | `.env.mittr-postgres.example` | ตัวอย่าง env สำหรับ PostgreSQL เท่านั้น |
@@ -43,7 +43,7 @@ git check-ignore .env.mittr.local
 
 ## 2. ใช้ release image
 
-Compose จะดึง multi-platform release image `ghcr.io/prawee/mittr-load:v0.0.7` จาก GHCR ให้อัตโนมัติ ไม่ต้อง build image ในเครื่องก่อน หากต้องการ build source ที่ checkout อยู่เพื่อทดสอบ ให้ใช้:
+Compose จะดึง multi-platform release image `ghcr.io/prawee/mittr-load:v0.0.8` จาก GHCR ให้อัตโนมัติ ไม่ต้อง build image ในเครื่องก่อน หากต้องการ build source ที่ checkout อยู่เพื่อทดสอบ ให้ใช้:
 
 ```bash
 docker build \
